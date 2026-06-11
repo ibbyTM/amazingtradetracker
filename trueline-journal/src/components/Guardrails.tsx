@@ -42,9 +42,7 @@ export default function Guardrails({
 }) {
   return (
     <div className="card animate-fade-up p-5">
-      <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-text-muted">
-        Prop Guardrails
-      </h3>
+      <h3 className="card-title mb-3">Prop guardrails</h3>
       {accounts.length === 0 ? (
         <p className="text-sm text-text-muted">
           No accounts added. Add your first funded account to track your prop guardrails.

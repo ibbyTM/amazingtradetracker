@@ -49,8 +49,15 @@ export default function Sidebar() {
           >
             ☰
           </button>
+          <div
+            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sm
+              font-extrabold text-white ${open ? '' : 'max-md:hidden'}`}
+            style={{ backgroundImage: 'linear-gradient(135deg, #a855f7, #3b82f6)' }}
+          >
+            T
+          </div>
           <div className={`${open ? '' : 'max-md:hidden'}`}>
-            <div className="text-lg font-extrabold tracking-widest text-text-primary">
+            <div className="text-base font-extrabold tracking-widest text-text-primary">
               TRUELINE
             </div>
             <div className="text-[10px] font-semibold tracking-[0.25em] text-accent-purple">

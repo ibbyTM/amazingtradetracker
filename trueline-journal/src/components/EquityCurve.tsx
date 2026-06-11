@@ -39,9 +39,7 @@ export default function EquityCurve({ trades }: { trades: Trade[] }) {
   return (
     <div className="card animate-fade-up overflow-hidden p-5">
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-sm font-bold uppercase tracking-wider text-text-muted">
-          Equity Curve
-        </h3>
+        <h3 className="card-title">Equity curve</h3>
         <div className="flex gap-1 rounded-lg bg-bg-primary p-1">
           {RANGES.map((r) => (
             <button
@@ -68,8 +66,13 @@ export default function EquityCurve({ trades }: { trades: Trade[] }) {
           <AreaChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
             <defs>
               <linearGradient id="equityFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="var(--accent-green)" stopOpacity={0.35} />
-                <stop offset="100%" stopColor="var(--accent-green)" stopOpacity={0} />
+                <stop offset="0%" stopColor="var(--accent-green)" stopOpacity={0.3} />
+                <stop offset="60%" stopColor="var(--accent-blue)" stopOpacity={0.1} />
+                <stop offset="100%" stopColor="var(--accent-purple)" stopOpacity={0} />
+              </linearGradient>
+              <linearGradient id="equityStroke" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="#00d4aa" />
+                <stop offset="100%" stopColor="#a855f7" />
               </linearGradient>
             </defs>
             <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
@@ -106,8 +109,8 @@ export default function EquityCurve({ trades }: { trades: Trade[] }) {
             <Area
               type="monotone"
               dataKey="cum"
-              stroke="var(--accent-green)"
-              strokeWidth={2}
+              stroke="url(#equityStroke)"
+              strokeWidth={2.5}
               fill="url(#equityFill)"
               animationDuration={700}
             />

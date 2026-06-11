@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import {
   PolarAngleAxis,
   PolarGrid,
@@ -14,54 +15,66 @@ interface EdgeRadarProps {
   score: number
 }
 
-/** Right-panel edge radar: chart fills the width, score reads big below it. */
+/** Edge breakdown card: gradient-stroked radar with the score beside it. */
 export default function EdgeRadar({ breakdown, score }: EdgeRadarProps) {
   const data = [
     { axis: 'Win %', value: breakdown.winRate },
-    { axis: 'Profit Factor', value: breakdown.profitFactor },
+    { axis: 'Profit factor', value: breakdown.profitFactor },
     { axis: 'Avg R', value: breakdown.avgR },
     { axis: 'Consistency', value: breakdown.consistency },
-    { axis: 'Risk Mgmt', value: breakdown.riskMgmt },
+    { axis: 'Risk mgmt', value: breakdown.riskMgmt },
     { axis: 'Discipline', value: breakdown.discipline },
   ]
 
   return (
     <div className="card card-purple animate-fade-up p-5">
-      <h3 className="mb-2 text-sm font-bold uppercase tracking-wider text-text-muted">
-        Edge Breakdown
-      </h3>
-      <div className="radar-glow h-56 w-full">
-        <ResponsiveContainer width="100%" height="100%">
-          <RadarChart data={data} outerRadius="72%">
-            <PolarGrid stroke="var(--border)" />
-            <PolarAngleAxis
-              dataKey="axis"
-              tick={{ fill: 'var(--text-muted)', fontSize: 10 }}
-            />
-            <PolarRadiusAxis domain={[0, 100]} tick={false} axisLine={false} />
-            <Radar
-              dataKey="value"
-              stroke="var(--accent-purple)"
-              strokeWidth={2}
-              fill="var(--accent-purple)"
-              fillOpacity={0.35}
-              animationDuration={700}
-            />
-          </RadarChart>
-        </ResponsiveContainer>
+      <div className="mb-1 flex items-center justify-between">
+        <h3 className="card-title">Edge breakdown</h3>
+        <Link to="/reports" className="text-xs font-semibold text-accent-purple hover:underline">
+          Details →
+        </Link>
       </div>
-      <div className="mt-1 flex flex-col items-center">
-        <div
-          className="num text-6xl font-extrabold text-accent-purple"
-          style={{ textShadow: '0 0 22px rgba(168, 85, 247, 0.45)' }}
-        >
-          {score}
+      <div className="flex items-center gap-1">
+        <div className="radar-glow h-52 min-w-0 flex-1">
+          <ResponsiveContainer width="100%" height="100%">
+            <RadarChart data={data} outerRadius="70%">
+              <defs>
+                <linearGradient id="radarStroke" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stopColor="#00d4aa" />
+                  <stop offset="100%" stopColor="#a855f7" />
+                </linearGradient>
+              </defs>
+              <PolarGrid stroke="var(--border)" />
+              <PolarAngleAxis
+                dataKey="axis"
+                tick={{ fill: 'var(--text-muted)', fontSize: 10 }}
+              />
+              <PolarRadiusAxis domain={[0, 100]} tick={false} axisLine={false} />
+              <Radar
+                dataKey="value"
+                stroke="url(#radarStroke)"
+                strokeWidth={2}
+                dot={{ r: 2.5, fill: 'var(--accent-purple)', strokeWidth: 0 }}
+                fill="var(--accent-purple)"
+                fillOpacity={0.3}
+                animationDuration={700}
+              />
+            </RadarChart>
+          </ResponsiveContainer>
         </div>
-        <div className="mt-1 text-[11px] font-bold tracking-[0.3em] text-text-muted">
-          EDGE SCORE
-        </div>
-        <div className="mt-1.5 rounded-md bg-accent-purple/15 px-2.5 py-0.5 text-xs font-semibold text-accent-purple">
-          {edgeLabel(score)}
+        <div className="flex shrink-0 flex-col items-center pr-1">
+          <div
+            className="num text-5xl font-extrabold text-accent-purple"
+            style={{ textShadow: '0 0 22px rgba(168, 85, 247, 0.45)' }}
+          >
+            {score}
+          </div>
+          <div className="mt-1.5 text-[10px] font-bold tracking-[0.3em] text-text-muted">
+            EDGE SCORE
+          </div>
+          <div className="mt-1.5 rounded-md bg-accent-purple/15 px-2.5 py-0.5 text-xs font-semibold text-accent-purple">
+            {edgeLabel(score)}
+          </div>
         </div>
       </div>
     </div>

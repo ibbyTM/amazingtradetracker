@@ -12,11 +12,9 @@ export default function RecentTrades({ trades }: { trades: Trade[] }) {
   return (
     <div className="card animate-fade-up p-5">
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-sm font-bold uppercase tracking-wider text-text-muted">
-          Recent Trades
-        </h3>
+        <h3 className="card-title">Recent trades</h3>
         <Link to="/trades" className="text-xs font-semibold text-accent-purple hover:underline">
-          View all trades →
+          All {trades.length} trades →
         </Link>
       </div>
 
@@ -86,7 +84,9 @@ function RowGroup({
             {t.side}
           </span>
         </td>
-        <td className="td">{t.setup || '—'}</td>
+        <td className="td">
+          {t.setup ? <span className="chip">{t.setup}</span> : <span className="text-text-muted">—</span>}
+        </td>
         <td className="td num text-right">{t.size}</td>
         <td className="td num text-text-muted">{t.duration || '—'}</td>
         <td className={`td num text-right ${moneyClass(t.rMultiple)}`}>{fmtR(t.rMultiple)}</td>

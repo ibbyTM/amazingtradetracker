@@ -52,9 +52,7 @@ export default function PnlCalendar({ trades }: { trades: Trade[] }) {
   return (
     <div className="card animate-fade-up p-5">
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-sm font-bold uppercase tracking-wider text-text-muted">
-          Monthly P&amp;L
-        </h3>
+        <h3 className="card-title">Monthly P&amp;L</h3>
         <div className="flex items-center gap-2 text-sm">
           <button className="btn-ghost !px-2 !py-1" onClick={() => shiftMonth(-1)}>
             ‹

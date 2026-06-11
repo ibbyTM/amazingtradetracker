@@ -38,14 +38,14 @@ export default function EquityCurve({ trades }: { trades: Trade[] }) {
 
   return (
     <div className="card animate-fade-up overflow-hidden p-5">
-      <div className="mb-3 flex items-center justify-between">
-        <h3 className="card-title">Equity curve</h3>
-        <div className="flex gap-1 rounded-lg bg-bg-primary p-1">
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <h3 className="card-title shrink-0">Equity curve</h3>
+        <div className="flex max-w-full gap-1 overflow-x-auto rounded-lg bg-bg-primary p-1">
           {RANGES.map((r) => (
             <button
               key={r}
               onClick={() => setRange(r)}
-              className={`rounded-md px-2.5 py-1 text-xs font-semibold transition-colors ${
+              className={`shrink-0 rounded-md px-2.5 py-2 text-xs font-semibold transition-colors md:py-1 ${
                 range === r ? 'bg-bg-hover text-text-primary' : 'text-text-muted hover:text-text-primary'
               }`}
             >
@@ -55,7 +55,7 @@ export default function EquityCurve({ trades }: { trades: Trade[] }) {
         </div>
       </div>
 
-      <div className="equity-glow relative h-64">
+      <div className="equity-glow relative h-[200px] md:h-64">
         <div className="equity-aurora" />
         {data.length === 0 && (
           <div className="absolute inset-0 z-10 flex items-center justify-center text-sm text-text-muted">
@@ -96,7 +96,7 @@ export default function EquityCurve({ trades }: { trades: Trade[] }) {
                 const p = payload[0].payload as { label: string; cum: number }
                 return (
                   <div className="card border-accent-green/30 px-3.5 py-2.5">
-                    <div className="mb-0.5 text-[11px] uppercase tracking-wider text-text-muted">
+                    <div className="mb-0.5 text-xs uppercase tracking-wider text-text-muted">
                       {p.label}
                     </div>
                     <div className={`num text-base font-bold ${moneyClass(p.cum)}`}>

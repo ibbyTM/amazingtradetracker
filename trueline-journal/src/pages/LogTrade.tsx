@@ -182,13 +182,23 @@ export default function LogTrade() {
         {/* Row 2 */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Symbol">
-            <select className="field" {...field('symbol')}>
+            <div className="flex gap-2 overflow-x-auto pb-1">
               {SYMBOLS.map((s) => (
-                <option key={s} value={s}>
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => set({ symbol: s })}
+                  className={`min-h-[44px] shrink-0 rounded-full border px-4 text-sm font-bold
+                    transition-colors ${
+                      form.symbol === s
+                        ? 'border-accent-purple bg-accent-purple/15 text-accent-purple'
+                        : 'border-border bg-bg-primary text-text-muted hover:text-text-primary'
+                    }`}
+                >
                   {s}
-                </option>
+                </button>
               ))}
-            </select>
+            </div>
           </Field>
           <Field label="Side">
             <div className="grid grid-cols-2 gap-2">
@@ -299,7 +309,8 @@ export default function LogTrade() {
           )}
         </Field>
 
-        <div className="flex justify-end gap-3">
+        {/* desktop actions */}
+        <div className="hidden justify-end gap-3 md:flex">
           <button className="btn-ghost" onClick={() => navigate(-1)}>
             Cancel
           </button>
@@ -307,6 +318,16 @@ export default function LogTrade() {
             {editId ? 'Save changes' : 'Save trade'}
           </button>
         </div>
+
+        {/* spacer so the fixed mobile save button doesn't cover content */}
+        <div className="h-14 md:hidden" />
+      </div>
+
+      {/* mobile: full-width save pinned above the tab bar */}
+      <div className="fixed inset-x-3 bottom-[68px] z-40 md:hidden">
+        <button className="btn-green h-14 w-full text-base shadow-card" onClick={handleSave}>
+          {editId ? 'Save changes' : 'Save trade'}
+        </button>
       </div>
     </div>
   )

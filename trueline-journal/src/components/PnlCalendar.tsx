@@ -53,20 +53,30 @@ export default function PnlCalendar({ trades }: { trades: Trade[] }) {
     <div className="card animate-fade-up p-5">
       <div className="mb-3 flex items-center justify-between">
         <h3 className="card-title">Monthly P&amp;L</h3>
-        <div className="flex items-center gap-2 text-sm">
-          <button className="btn-ghost !px-2 !py-1" onClick={() => shiftMonth(-1)}>
+        <div className="flex items-center gap-1 text-sm md:gap-2">
+          <button
+            className="btn-ghost min-h-[44px] min-w-[44px] !px-2 !py-1"
+            onClick={() => shiftMonth(-1)}
+            aria-label="Previous month"
+          >
             ‹
           </button>
-          <span className="w-36 text-center font-semibold">{monthLabel}</span>
-          <button className="btn-ghost !px-2 !py-1" onClick={() => shiftMonth(1)}>
+          <span className="w-28 text-center text-xs font-semibold md:w-36 md:text-sm">
+            {monthLabel}
+          </span>
+          <button
+            className="btn-ghost min-h-[44px] min-w-[44px] !px-2 !py-1"
+            onClick={() => shiftMonth(1)}
+            aria-label="Next month"
+          >
             ›
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-7 gap-1.5">
+      <div className="grid grid-cols-7 gap-1 md:gap-1.5">
         {WEEKDAYS.map((d) => (
-          <div key={d} className="pb-1 text-center text-[10px] font-bold text-text-muted">
+          <div key={d} className="pb-1 text-center text-[10px] font-bold text-text-muted md:text-xs">
             {d}
           </div>
         ))}
@@ -77,24 +87,28 @@ export default function PnlCalendar({ trades }: { trades: Trade[] }) {
             <button
               key={cell.date}
               onClick={() => cell.count > 0 && setSelectedDay(cell.date)}
-              className={`flex min-h-[58px] flex-col items-start rounded-lg border p-1.5 text-left
-                transition-all duration-150 hover:-translate-y-0.5 ${
+              className={`flex min-h-[44px] w-full flex-col items-start overflow-hidden rounded-lg
+                border p-1 text-left transition-all duration-150 md:min-h-[58px] md:p-1.5
+                md:hover:-translate-y-0.5 ${
                   cell.count === 0
-                    ? 'cursor-default border-border bg-bg-primary text-text-muted hover:translate-y-0'
+                    ? 'cursor-default border-border bg-bg-primary text-text-muted md:hover:translate-y-0'
                     : cell.pnl > 0
-                      ? 'border-accent-green/30 bg-accent-green/10 shadow-[0_0_14px_rgba(0,212,170,0.22)] hover:bg-accent-green/20'
+                      ? 'border-accent-green/30 bg-accent-green/10 md:shadow-[0_0_14px_rgba(0,212,170,0.22)] md:hover:bg-accent-green/20'
                       : cell.pnl < 0
-                        ? 'border-accent-red/30 bg-accent-red/10 shadow-[0_0_14px_rgba(255,71,87,0.22)] hover:bg-accent-red/20'
-                        : 'border-border bg-bg-hover hover:bg-border'
+                        ? 'border-accent-red/30 bg-accent-red/10 md:shadow-[0_0_14px_rgba(255,71,87,0.22)] md:hover:bg-accent-red/20'
+                        : 'border-border bg-bg-hover md:hover:bg-border'
                 } ${cell.date === todayStr() ? 'ring-1 ring-accent-purple' : ''}`}
             >
               <span className="text-[10px] text-text-muted">{cell.day}</span>
               {cell.count > 0 && (
                 <>
-                  <span className={`num text-xs font-semibold ${moneyClass(cell.pnl)}`}>
+                  <span
+                    className={`num w-full truncate text-[10px] font-semibold md:text-xs ${moneyClass(cell.pnl)}`}
+                  >
                     {fmtMoney(cell.pnl, 0)}
                   </span>
-                  <span className="text-[10px] text-text-muted">
+                  {/* trade count is desktop-only — too small to read on phones */}
+                  <span className="hidden text-[10px] text-text-muted md:block">
                     {cell.count} trade{cell.count > 1 ? 's' : ''}
                   </span>
                 </>

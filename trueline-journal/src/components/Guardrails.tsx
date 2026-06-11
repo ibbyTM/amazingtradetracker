@@ -17,11 +17,11 @@ function LimitBar({
 }) {
   return (
     <div className="mb-2">
-      <div className="mb-1 flex items-center justify-between text-[11px]">
-        <span className="text-text-muted">{label}</span>
-        <span className="num text-text-muted">
-          ${used.toLocaleString()} / ${limit.toLocaleString()} · room {fmtMoney(room, 0)}
+      <div className="mb-1 flex items-center justify-between gap-2 text-xs">
+        <span className="num truncate text-text-muted">
+          {label} · ${used.toLocaleString()}/{`$${limit.toLocaleString()}`}
         </span>
+        <span className="num shrink-0 text-text-muted">room {fmtMoney(room, 0)}</span>
       </div>
       <div className="h-1.5 overflow-hidden rounded-full bg-bg-primary">
         <div

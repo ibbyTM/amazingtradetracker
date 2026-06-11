@@ -245,7 +245,7 @@ function Bar({
 }) {
   return (
     <div className="mb-3">
-      <div className="mb-1 flex justify-between text-[11px]">
+      <div className="mb-1 flex justify-between gap-2 text-xs">
         <span className="text-text-muted">{label}</span>
         <span className="num text-text-muted">
           ${room.toLocaleString()} room of ${limit.toLocaleString()}

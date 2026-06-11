@@ -129,10 +129,10 @@ export default function Settings() {
           Data management
         </h2>
         <div className="flex flex-wrap gap-3">
-          <button className="btn-ghost" onClick={exportJson}>
+          <button className="btn-ghost max-md:w-full" onClick={exportJson}>
             ⬇ Export all data (JSON)
           </button>
-          <button className="btn-ghost" onClick={() => fileRef.current?.click()}>
+          <button className="btn-ghost max-md:w-full" onClick={() => fileRef.current?.click()}>
             ⬆ Import from JSON
           </button>
           <input
@@ -142,7 +142,7 @@ export default function Settings() {
             className="hidden"
             onChange={(e) => handleImport(e.target.files?.[0])}
           />
-          <button className="btn-danger" onClick={() => setConfirmClear(true)}>
+          <button className="btn-danger max-md:w-full" onClick={() => setConfirmClear(true)}>
             Clear all data
           </button>
         </div>

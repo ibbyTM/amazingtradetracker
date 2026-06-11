@@ -56,7 +56,7 @@ export default function Journal() {
         <h1 className="text-xl font-bold">Daily Journal</h1>
         <input
           type="date"
-          className="field max-w-[180px]"
+          className="field w-full md:max-w-[180px]"
           value={date}
           onChange={(e) => setDate(e.target.value)}
         />
@@ -70,12 +70,12 @@ export default function Journal() {
 
         <div>
           <label className="field-label">Bias</label>
-          <div className="flex gap-2">
+          <div className="grid grid-cols-3 gap-2 md:flex">
             {BIASES.map((b) => (
               <button
                 key={b}
                 onClick={() => set({ bias: b })}
-                className={`rounded-full border px-4 py-1.5 text-sm font-semibold transition-colors ${
+                className={`min-h-[44px] rounded-full border px-4 py-1.5 text-sm font-semibold transition-colors md:min-h-0 ${
                   entry.bias === b
                     ? b === 'Bullish'
                       ? 'border-accent-green bg-accent-green/15 text-accent-green'
@@ -94,7 +94,7 @@ export default function Journal() {
         <div>
           <label className="field-label">Key levels</label>
           <textarea
-            className="field min-h-[72px]"
+            className="field min-h-[100px]"
             placeholder="Overnight high/low, VWAP, prior day levels…"
             value={entry.keyLevels}
             onChange={(e) => set({ keyLevels: e.target.value })}
@@ -114,7 +114,7 @@ export default function Journal() {
             onChange={(e) => set({ mentalState: Number(e.target.value) })}
             className="w-full accent-[--accent-purple]"
           />
-          <div className="flex justify-between text-[10px] text-text-muted">
+          <div className="flex justify-between text-xs text-text-muted">
             <span>😫 exhausted</span>
             <span>😐 neutral</span>
             <span>🎯 focused</span>
@@ -124,7 +124,7 @@ export default function Journal() {
         <div>
           <label className="field-label">Game plan</label>
           <textarea
-            className="field min-h-[72px]"
+            className="field min-h-[100px]"
             placeholder="What are you looking for today? What will keep you out of trouble?"
             value={entry.gamePlan}
             onChange={(e) => set({ gamePlan: e.target.value })}
@@ -140,7 +140,7 @@ export default function Journal() {
         <div>
           <label className="field-label">What went well</label>
           <textarea
-            className="field min-h-[72px]"
+            className="field min-h-[100px]"
             value={entry.whatWentWell}
             onChange={(e) => set({ whatWentWell: e.target.value })}
           />
@@ -148,7 +148,7 @@ export default function Journal() {
         <div>
           <label className="field-label">Mistakes</label>
           <textarea
-            className="field min-h-[72px]"
+            className="field min-h-[100px]"
             value={entry.mistakes}
             onChange={(e) => set({ mistakes: e.target.value })}
           />
@@ -156,7 +156,7 @@ export default function Journal() {
         <div>
           <label className="field-label">Lesson learned</label>
           <textarea
-            className="field min-h-[72px]"
+            className="field min-h-[100px]"
             value={entry.lesson}
             onChange={(e) => set({ lesson: e.target.value })}
           />

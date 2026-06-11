@@ -46,8 +46,9 @@ export default function AiAssistant() {
       <button
         onClick={() => setOpen(!isOpen)}
         aria-label="Open Trueline AI"
-        className="fixed bottom-5 right-5 z-50 flex h-12 w-12 items-center justify-center rounded-full
-          bg-accent-purple text-white shadow-card transition-transform hover:scale-105"
+        className="fixed bottom-[76px] right-4 z-50 flex h-12 w-12 items-center justify-center
+          rounded-full bg-accent-purple text-white shadow-card transition-transform
+          hover:scale-105 md:bottom-5 md:right-5"
       >
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
           <path
@@ -60,11 +61,15 @@ export default function AiAssistant() {
         </svg>
       </button>
 
-      {/* Slide-in panel */}
+      {/* Panel: bottom sheet on mobile, right slide-in on desktop */}
       <div
-        className={`fixed right-0 top-0 z-50 flex h-screen w-full max-w-[420px] flex-col border-l
-          border-border bg-bg-card shadow-card transition-transform duration-300 ${
-            isOpen ? 'translate-x-0' : 'translate-x-full'
+        className={`fixed inset-x-0 bottom-0 z-50 flex h-[100dvh] w-full flex-col border-t
+          border-border bg-bg-card shadow-card transition-transform duration-200
+          md:inset-x-auto md:right-0 md:top-0 md:h-screen md:max-w-[420px] md:border-l
+          md:border-t-0 md:duration-300 ${
+            isOpen
+              ? 'translate-x-0 translate-y-0'
+              : 'max-md:translate-y-full md:translate-x-full'
           }`}
       >
         <div className="flex items-center gap-2 border-b border-border px-4 py-3">
@@ -87,14 +92,15 @@ export default function AiAssistant() {
                 Ask me anything about your trading — I can see your live stats, trades, accounts
                 and journal.
               </p>
-              <div className="flex flex-wrap gap-2">
+              {/* mobile: two scrollable rows; desktop: wrapping pills */}
+              <div className="grid grid-flow-col grid-rows-2 gap-2 overflow-x-auto pb-1 md:flex md:flex-wrap md:overflow-visible">
                 {chips.map((chip) => (
                   <button
                     key={chip}
                     onClick={() => send(chip)}
-                    className="rounded-full border border-accent-purple/40 bg-accent-purple/10 px-3
-                      py-1.5 text-xs font-medium text-accent-purple transition-colors
-                      hover:bg-accent-purple/20"
+                    className="min-h-[44px] whitespace-nowrap rounded-full border
+                      border-accent-purple/40 bg-accent-purple/10 px-3 py-1.5 text-xs font-medium
+                      text-accent-purple transition-colors hover:bg-accent-purple/20 md:min-h-0"
                   >
                     {chip}
                   </button>
@@ -123,7 +129,7 @@ export default function AiAssistant() {
                   m.content
                 )}
               </div>
-              <span className="mt-1 text-[10px] text-text-muted">{fmtClock(m.ts)}</span>
+              <span className="mt-1 text-xs text-text-muted">{fmtClock(m.ts)}</span>
             </div>
           ))}
 

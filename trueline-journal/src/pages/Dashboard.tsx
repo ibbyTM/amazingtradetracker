@@ -10,6 +10,7 @@ import EdgeRadar from '../components/EdgeRadar'
 import PnlCalendar from '../components/PnlCalendar'
 import RecentTrades from '../components/RecentTrades'
 import Guardrails from '../components/Guardrails'
+import { useIsMobile } from '../lib/useIsMobile'
 
 export default function Dashboard() {
   const trades = useStore((s) => s.trades)
@@ -32,21 +33,21 @@ export default function Dashboard() {
   return (
     <div className="space-y-4">
       {/* Header bar */}
-      <header className="flex flex-wrap items-center gap-3">
+      <header className="space-y-3 md:flex md:items-center md:justify-between md:space-y-0">
         <div>
-          <h1 className="text-xl font-bold">{greeting(settings.displayName)}</h1>
-          <p className="text-sm text-text-muted">
+          <h1 className="text-lg font-bold md:text-xl">{greeting(settings.displayName)}</h1>
+          <p className="text-xs text-text-muted md:text-sm">
             {fmtLongDate()} · <span className="text-accent-blue">{sessionStatus()}</span>
             {todayTrades.length > 0 && ` · ${todayTrades.length} trades captured today`}
           </p>
         </div>
-        <div className="ml-auto flex items-center gap-3">
+        <div className="flex items-center gap-3">
           {summary.streaks.current > 0 && (
-            <span className="badge bg-accent-yellow/10 px-3 py-1.5 text-accent-yellow">
-              🔥 {summary.streaks.current}-day green streak
+            <span className="badge shrink-0 bg-accent-yellow/10 px-3 py-1.5 text-accent-yellow">
+              🔥 {summary.streaks.current} win streak
             </span>
           )}
-          <Link to="/log" className="btn-primary">
+          <Link to="/log" className="btn-primary flex-1 md:flex-none">
             + Log Trade
           </Link>
         </div>
@@ -70,15 +71,15 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Stats cards */}
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-5">
-        <div className="card card-green animate-fade-up overflow-hidden p-4">
+      {/* Stats cards — 2-col grid on mobile (Net P&L + Edge span both cols) */}
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 xl:grid-cols-5">
+        <div className="card card-green animate-fade-up overflow-hidden p-4 max-md:col-span-2">
           <Sparkline values={equitySeries} color="var(--accent-green)" />
           <div className="relative">
             <div className="text-xs font-semibold uppercase tracking-wider text-text-muted">
               Net P&amp;L
             </div>
-            <div className={`num mt-2 text-3xl font-bold ${moneyClass(summary.netPnl)}`}>
+            <div className={`num mt-2 text-2xl font-bold md:text-3xl ${moneyClass(summary.netPnl)}`}>
               {fmtMoney(summary.netPnl)}
               <TrendArrow value={summary.netPnl} />
             </div>
@@ -112,7 +113,9 @@ export default function Dashboard() {
             <div className="text-xs font-semibold uppercase tracking-wider text-text-muted">
               Expectancy
             </div>
-            <div className={`num mt-2 text-3xl font-bold ${moneyClass(summary.expectancy)}`}>
+            <div
+              className={`num mt-2 text-2xl font-bold md:text-3xl ${moneyClass(summary.expectancy)}`}
+            >
               {fmtMoney(summary.expectancy)}
               <TrendArrow value={summary.expectancy} />
             </div>
@@ -124,7 +127,7 @@ export default function Dashboard() {
 
         <DonutCard
           label="Edge Score"
-          accent="card-purple"
+          accent="card-purple max-md:col-span-2"
           value={summary.edgeScore}
           display={String(summary.edgeScore)}
           color="var(--accent-purple)"
@@ -132,28 +135,27 @@ export default function Dashboard() {
         />
       </div>
 
-      {/* Main grid */}
+      {/* Main grid. Mobile order: equity → today/edge/guardrails → calendar →
+          recent. On xl the right panel occupies column 3 across all rows. */}
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-        <div className="space-y-4 xl:col-span-2">
+        <div className="xl:col-span-2">
           <EquityCurve trades={trades} />
-          <PnlCalendar trades={trades} />
-          <RecentTrades trades={trades} />
         </div>
 
         {/* Right panel — Today → Edge breakdown → Prop guardrails */}
-        <div className="space-y-4">
+        <div className="space-y-4 xl:col-start-3 xl:row-start-1 xl:row-span-3">
           <div className="card card-blue animate-fade-up p-5">
             <h3 className="card-title mb-3">Today</h3>
             <div className="grid grid-cols-3 gap-3 text-center">
               <div>
-                <div className={`num text-xl font-bold ${moneyClass(todayPnl)}`}>
+                <div className={`num truncate text-xl font-bold ${moneyClass(todayPnl)}`}>
                   {fmtMoney(todayPnl, 0)}
                 </div>
-                <div className="text-[11px] text-text-muted">P&amp;L</div>
+                <div className="text-xs text-text-muted">P&amp;L</div>
               </div>
               <div>
                 <div className="num text-xl font-bold">{todayTrades.length}</div>
-                <div className="text-[11px] text-text-muted">Trades</div>
+                <div className="text-xs text-text-muted">Trades</div>
               </div>
               <div>
                 <div className="num text-xl font-bold">
@@ -161,12 +163,19 @@ export default function Dashboard() {
                   <span className="text-text-muted">/</span>
                   <span className="text-accent-red">{todayLosses}</span>
                 </div>
-                <div className="text-[11px] text-text-muted">W/L</div>
+                <div className="text-xs text-text-muted">W/L</div>
               </div>
             </div>
           </div>
           <EdgeRadar breakdown={summary.breakdown} score={summary.edgeScore} />
           <Guardrails accounts={accounts} trades={trades} />
+        </div>
+
+        <div className="xl:col-span-2 xl:col-start-1 xl:row-start-2">
+          <PnlCalendar trades={trades} />
+        </div>
+        <div className="xl:col-span-2 xl:col-start-1 xl:row-start-3">
+          <RecentTrades trades={trades} />
         </div>
       </div>
     </div>
@@ -229,6 +238,7 @@ function DonutCard({
   color: string
   sub: string
 }) {
+  const isMobile = useIsMobile()
   return (
     <div
       className={`card ${accent} animate-fade-up flex items-center justify-between gap-3 overflow-hidden p-4`}
@@ -237,12 +247,12 @@ function DonutCard({
         <div className="text-xs font-semibold uppercase tracking-wider text-text-muted">
           {label}
         </div>
-        <div className="num mt-2 text-3xl font-bold" style={{ color }}>
+        <div className="num mt-2 text-2xl font-bold md:text-3xl" style={{ color }}>
           {display}
         </div>
         <div className="mt-1 truncate text-xs text-text-muted">{sub}</div>
       </div>
-      <Donut value={value} max={max} color={color} size={60} />
+      <Donut value={value} max={max} color={color} size={isMobile ? 48 : 60} />
     </div>
   )
 }

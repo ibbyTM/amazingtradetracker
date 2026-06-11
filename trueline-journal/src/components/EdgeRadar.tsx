@@ -34,8 +34,8 @@ export default function EdgeRadar({ breakdown, score }: EdgeRadarProps) {
           Details →
         </Link>
       </div>
-      <div className="flex items-center gap-1">
-        <div className="radar-glow h-52 min-w-0 flex-1">
+      <div className="flex flex-col items-center gap-2 md:flex-row md:gap-1">
+        <div className="radar-glow h-[280px] w-full min-w-0 md:h-52 md:flex-1">
           <ResponsiveContainer width="100%" height="100%">
             <RadarChart data={data} outerRadius="70%">
               <defs>
@@ -69,7 +69,7 @@ export default function EdgeRadar({ breakdown, score }: EdgeRadarProps) {
           >
             {score}
           </div>
-          <div className="mt-1.5 text-[10px] font-bold tracking-[0.3em] text-text-muted">
+          <div className="mt-1.5 text-xs font-bold tracking-[0.3em] text-text-muted">
             EDGE SCORE
           </div>
           <div className="mt-1.5 rounded-md bg-accent-purple/15 px-2.5 py-0.5 text-xs font-semibold text-accent-purple">

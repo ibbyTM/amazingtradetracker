@@ -113,9 +113,13 @@ export default function Trades() {
 
   return (
     <div className="space-y-4">
-      <header className="flex items-center justify-between">
+      <header className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-bold">Trades</h1>
-        <button className="btn-ghost" onClick={exportCsv} disabled={filtered.length === 0}>
+        <button
+          className="btn-ghost max-md:w-full"
+          onClick={exportCsv}
+          disabled={filtered.length === 0}
+        >
           ⬇ Export CSV
         </button>
       </header>
@@ -137,27 +141,61 @@ export default function Trades() {
             </button>
           ))}
         </div>
+        {/* mobile: side + result as horizontally scrollable pills */}
+        <div className="flex gap-2 overflow-x-auto pb-1 md:hidden">
+          {(['all', 'LONG', 'SHORT'] as const).map((s) => (
+            <FilterPill key={s} active={side === s} onClick={() => setSide(s)}>
+              {s === 'all' ? 'All sides' : s}
+            </FilterPill>
+          ))}
+          <span className="my-auto shrink-0 text-border">|</span>
+          {(
+            [
+              ['all', 'All results'],
+              ['win', 'Win'],
+              ['loss', 'Loss'],
+              ['be', 'BE'],
+            ] as [Result, string][]
+          ).map(([value, label]) => (
+            <FilterPill key={value} active={result === value} onClick={() => setResult(value)}>
+              {label}
+            </FilterPill>
+          ))}
+        </div>
+
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
-          <select className="field" value={side} onChange={(e) => setSide(e.target.value as typeof side)}>
+          <select
+            className="field max-md:hidden"
+            value={side}
+            onChange={(e) => setSide(e.target.value as typeof side)}
+          >
             <option value="all">All sides</option>
             <option value="LONG">LONG</option>
             <option value="SHORT">SHORT</option>
           </select>
           <input
-            className="field"
+            className="field max-md:col-span-2"
             placeholder="Search setup…"
             value={setupQuery}
             onChange={(e) => setSetupQuery(e.target.value)}
           />
           <input type="date" className="field" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
           <input type="date" className="field" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
-          <select className="field" value={result} onChange={(e) => setResult(e.target.value as Result)}>
+          <select
+            className="field max-md:hidden"
+            value={result}
+            onChange={(e) => setResult(e.target.value as Result)}
+          >
             <option value="all">All results</option>
             <option value="win">Win</option>
             <option value="loss">Loss</option>
             <option value="be">Break-even</option>
           </select>
-          <select className="field" value={accountId} onChange={(e) => setAccountId(e.target.value)}>
+          <select
+            className="field max-md:col-span-2"
+            value={accountId}
+            onChange={(e) => setAccountId(e.target.value)}
+          >
             <option value="all">All accounts</option>
             {accounts.map((a) => (
               <option key={a.id} value={a.id}>
@@ -192,21 +230,30 @@ export default function Trades() {
         </span>
       </div>
 
-      {/* Table */}
-      <div className="card overflow-x-auto">
+      {/* Mobile: card list */}
+      <div className="space-y-2 md:hidden">
         {filtered.length === 0 ? (
-          <div className="p-8 text-center text-sm text-text-muted">
-            {trades.length === 0 ? (
-              <>
-                No trades logged yet.{' '}
-                <Link to="/log" className="font-semibold text-accent-purple hover:underline">
-                  Hit + Log Trade
-                </Link>{' '}
-                to get started.
-              </>
-            ) : (
-              'No trades match the current filters.'
-            )}
+          <EmptyTrades anyTrades={trades.length > 0} />
+        ) : (
+          filtered.map((t) => (
+            <MobileTradeCard
+              key={t.id}
+              trade={t}
+              accountName={accounts.find((a) => a.id === t.accountId)?.name ?? '—'}
+              expanded={expanded === t.id}
+              onToggle={() => setExpanded(expanded === t.id ? null : t.id)}
+              onEdit={() => navigate(`/log?edit=${t.id}`)}
+              onDelete={() => handleDelete(t.id)}
+            />
+          ))
+        )}
+      </div>
+
+      {/* Desktop: table */}
+      <div className="card hidden overflow-x-auto md:block">
+        {filtered.length === 0 ? (
+          <div className="p-8">
+            <EmptyTrades anyTrades={trades.length > 0} />
           </div>
         ) : (
           <table className="w-full min-w-[900px]">
@@ -240,6 +287,144 @@ export default function Trades() {
           </table>
         )}
       </div>
+    </div>
+  )
+}
+
+function FilterPill({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean
+  onClick: () => void
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`min-h-[44px] shrink-0 rounded-full border px-4 text-xs font-semibold
+        transition-colors ${
+          active
+            ? 'border-accent-purple bg-accent-purple/15 text-accent-purple'
+            : 'border-border bg-bg-primary text-text-muted'
+        }`}
+    >
+      {children}
+    </button>
+  )
+}
+
+function EmptyTrades({ anyTrades }: { anyTrades: boolean }) {
+  return (
+    <div className="card p-6 text-center text-sm text-text-muted md:border-0 md:bg-none md:p-0 md:shadow-none">
+      {anyTrades ? (
+        'No trades match the current filters.'
+      ) : (
+        <>
+          No trades logged yet.{' '}
+          <Link to="/log" className="font-semibold text-accent-purple hover:underline">
+            Hit + Log Trade
+          </Link>{' '}
+          to get started.
+        </>
+      )}
+    </div>
+  )
+}
+
+function MobileTradeCard({
+  trade: t,
+  accountName,
+  expanded,
+  onToggle,
+  onEdit,
+  onDelete,
+}: {
+  trade: Trade
+  accountName: string
+  expanded: boolean
+  onToggle: () => void
+  onEdit: () => void
+  onDelete: () => void
+}) {
+  return (
+    <div className="card min-h-[44px] p-3" onClick={onToggle}>
+      <div className="flex items-center gap-2">
+        <span className={`badge shrink-0 ${SYMBOL_COLORS[t.symbol]}`}>{t.symbol}</span>
+        <span
+          className={`badge shrink-0 ${
+            t.side === 'LONG'
+              ? 'bg-accent-green/15 text-accent-green'
+              : 'bg-accent-red/15 text-accent-red'
+          }`}
+        >
+          {t.side}
+        </span>
+        <span className="min-w-0 truncate text-sm">{t.setup || '—'}</span>
+        <span className="num ml-auto shrink-0 text-xs text-text-muted">
+          {t.date.slice(5)} {t.time}
+        </span>
+      </div>
+      <div className="mt-2 flex items-center justify-between">
+        <span className={`num text-sm font-semibold ${moneyClass(t.rMultiple)}`}>
+          {fmtR(t.rMultiple)}
+        </span>
+        <span className={`num text-2xl font-bold ${moneyClass(t.pnl)}`}>{fmtMoney(t.pnl)}</span>
+      </div>
+
+      {expanded && (
+        <div className="mt-3 space-y-3 border-t border-border pt-3 text-sm">
+          <div className="grid grid-cols-3 gap-2">
+            <MobileInfo label="Entry" value={String(t.entryPrice)} />
+            <MobileInfo label="Exit" value={String(t.exitPrice)} />
+            <MobileInfo label="Stop" value={t.stopPrice ? String(t.stopPrice) : '—'} />
+            <MobileInfo label="Size" value={String(t.size)} />
+            <MobileInfo label="Duration" value={t.duration || '—'} />
+            <MobileInfo label="Account" value={accountName} />
+          </div>
+          {t.tags.length > 0 && (
+            <div className="text-xs text-text-muted">Tags: {t.tags.join(', ')}</div>
+          )}
+          {t.notes && <p className="break-words text-xs text-text-muted">{t.notes}</p>}
+          {t.screenshotUrl && (
+            <img
+              src={t.screenshotUrl}
+              alt="Trade screenshot"
+              className="max-h-48 w-full rounded-lg border border-border object-contain"
+            />
+          )}
+          <div className="flex gap-2">
+            <button
+              className="btn-ghost flex-1"
+              onClick={(e) => {
+                e.stopPropagation()
+                onEdit()
+              }}
+            >
+              Edit
+            </button>
+            <button
+              className="btn-danger flex-1"
+              onClick={(e) => {
+                e.stopPropagation()
+                onDelete()
+              }}
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function MobileInfo({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0">
+      <div className="text-xs text-text-muted">{label}</div>
+      <div className="num truncate text-sm">{value}</div>
     </div>
   )
 }

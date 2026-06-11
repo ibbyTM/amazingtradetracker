@@ -189,6 +189,43 @@
   }
 }
 
+/* ---- Mobile (<768px): compact, calm, fast ------------------------------- */
+@media (max-width: 767px) {
+  /* lighter elevation + no glow-on-hover (hover doesn't exist on touch) */
+  .card,
+  .card:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+    transition-duration: 0.15s;
+  }
+  /* compact card padding regardless of the desktop utility used */
+  .card.p-4,
+  .card.p-5,
+  .card.p-6 {
+    padding: 0.75rem;
+  }
+  /* 44px minimum touch targets */
+  .btn {
+    min-height: 44px;
+  }
+  .field {
+    min-height: 44px;
+  }
+  /* heavy effects off for smoothness */
+  .equity-aurora {
+    display: none;
+  }
+  .equity-glow .recharts-area-curve,
+  .radar-glow .recharts-polygon {
+    filter: none;
+  }
+  .animate-fade-up {
+    animation: none;
+  }
+  .nav-active {
+    box-shadow: none;
+  }
+}
+
 @keyframes fade-up {
   from {
     opacity: 0;

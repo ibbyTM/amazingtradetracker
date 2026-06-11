@@ -10,6 +10,7 @@ interface FormState {
   platform: Platform
   accountSize: string
   startingBalance: string
+  currentBalance: string
   dailyLossLimit: string
   trailingDDLimit: string
 }
@@ -19,6 +20,7 @@ const emptyForm: FormState = {
   platform: 'Topstep',
   accountSize: '',
   startingBalance: '',
+  currentBalance: '',
   dailyLossLimit: '',
   trailingDDLimit: '',
 }
@@ -27,14 +29,30 @@ export default function Accounts() {
   const { accounts, trades, addAccount, editAccount, deleteAccount } = useStore()
   const [form, setForm] = useState<FormState>(emptyForm)
   const [editingId, setEditingId] = useState<string | null>(null)
+  // Once the user types in Current Balance it stops mirroring Starting Balance.
+  const [balanceTouched, setBalanceTouched] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   const set = (patch: Partial<FormState>) => setForm((f) => ({ ...f, ...patch }))
 
+  function setStartingBalance(value: string) {
+    set(
+      !editingId && !balanceTouched
+        ? { startingBalance: value, currentBalance: value }
+        : { startingBalance: value },
+    )
+  }
+
   function validate(): boolean {
     const errs: Record<string, string> = {}
     if (!form.name.trim()) errs.name = 'Required'
-    for (const key of ['accountSize', 'startingBalance', 'dailyLossLimit', 'trailingDDLimit'] as const) {
+    for (const key of [
+      'accountSize',
+      'startingBalance',
+      'currentBalance',
+      'dailyLossLimit',
+      'trailingDDLimit',
+    ] as const) {
       const v = parseFloat(form[key])
       if (Number.isNaN(v) || v < 0) errs[key] = 'Enter a valid amount'
     }
@@ -49,6 +67,7 @@ export default function Accounts() {
       platform: form.platform,
       accountSize: parseFloat(form.accountSize),
       startingBalance: parseFloat(form.startingBalance),
+      currentBalance: parseFloat(form.currentBalance),
       dailyLossLimit: parseFloat(form.dailyLossLimit),
       trailingDDLimit: parseFloat(form.trailingDDLimit),
     }
@@ -58,21 +77,23 @@ export default function Accounts() {
       const account: Account = {
         id: crypto.randomUUID(),
         ...base,
-        currentBalance: base.startingBalance,
       }
       addAccount(account)
     }
     setForm(emptyForm)
     setEditingId(null)
+    setBalanceTouched(false)
   }
 
   function startEdit(a: Account) {
     setEditingId(a.id)
+    setBalanceTouched(true)
     setForm({
       name: a.name,
       platform: a.platform,
       accountSize: String(a.accountSize),
       startingBalance: String(a.startingBalance),
+      currentBalance: String(a.currentBalance),
       dailyLossLimit: String(a.dailyLossLimit),
       trailingDDLimit: String(a.trailingDDLimit),
     })
@@ -84,6 +105,7 @@ export default function Accounts() {
       if (editingId === id) {
         setEditingId(null)
         setForm(emptyForm)
+        setBalanceTouched(false)
       }
     }
   }
@@ -125,7 +147,14 @@ export default function Accounts() {
           </Field>
           <Field label="Starting balance ($)" error={errors.startingBalance}>
             <input type="number" className="field num" value={form.startingBalance}
-              onChange={(e) => set({ startingBalance: e.target.value })} />
+              onChange={(e) => setStartingBalance(e.target.value)} />
+          </Field>
+          <Field label="Current balance ($)" error={errors.currentBalance}>
+            <input type="number" className="field num" value={form.currentBalance}
+              onChange={(e) => {
+                setBalanceTouched(true)
+                set({ currentBalance: e.target.value })
+              }} />
           </Field>
           <Field label="Daily loss limit ($)" error={errors.dailyLossLimit}>
             <input type="number" className="field num" value={form.dailyLossLimit}
@@ -143,6 +172,7 @@ export default function Accounts() {
               onClick={() => {
                 setEditingId(null)
                 setForm(emptyForm)
+                setBalanceTouched(false)
               }}
             >
               Cancel

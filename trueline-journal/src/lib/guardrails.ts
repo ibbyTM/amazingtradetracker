@@ -21,16 +21,11 @@ export function accountStatus(account: Account, trades: Trade[]): AccountStatus 
     .filter((t) => t.date === today)
     .reduce((sum, t) => sum + t.pnl, 0)
 
-  // Trailing drawdown trails the equity peak since the starting balance.
-  let balance = account.startingBalance
-  let peak = account.startingBalance
-  for (const t of accTrades) {
-    balance += t.pnl
-    if (balance > peak) peak = balance
-  }
-
+  // Balance is the stored (independently editable) currentBalance; drawdown
+  // is how far it sits below the starting balance.
+  const balance = account.currentBalance
   const dailyUsed = Math.max(0, -todayPnl)
-  const ddUsed = Math.max(0, peak - balance)
+  const ddUsed = Math.max(0, account.startingBalance - balance)
   const pct = (used: number, limit: number) =>
     limit > 0 ? Math.min(100, (used / limit) * 100) : 0
 

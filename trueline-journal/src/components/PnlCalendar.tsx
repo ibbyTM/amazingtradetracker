@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import type { Trade } from '../store/types'
-import { fmtMoney, moneyClass } from '../lib/format'
+import { fmtMoney, moneyClass, todayStr } from '../lib/format'
 import Modal from './Modal'
 import { SYMBOL_COLORS } from '../lib/markets'
 
@@ -50,7 +50,7 @@ export default function PnlCalendar({ trades }: { trades: Trade[] }) {
   const dayTrades = selectedDay ? trades.filter((t) => t.date === selectedDay) : []
 
   return (
-    <div className="card p-5">
+    <div className="card animate-fade-up p-5">
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-sm font-bold uppercase tracking-wider text-text-muted">
           Monthly P&amp;L
@@ -80,15 +80,15 @@ export default function PnlCalendar({ trades }: { trades: Trade[] }) {
               key={cell.date}
               onClick={() => cell.count > 0 && setSelectedDay(cell.date)}
               className={`flex min-h-[58px] flex-col items-start rounded-lg border p-1.5 text-left
-                transition-colors ${
+                transition-all duration-150 hover:-translate-y-0.5 ${
                   cell.count === 0
-                    ? 'cursor-default border-border bg-bg-primary text-text-muted'
+                    ? 'cursor-default border-border bg-bg-primary text-text-muted hover:translate-y-0'
                     : cell.pnl > 0
-                      ? 'border-accent-green/30 bg-accent-green/10 hover:bg-accent-green/20'
+                      ? 'border-accent-green/30 bg-accent-green/10 shadow-[0_0_14px_rgba(0,212,170,0.22)] hover:bg-accent-green/20'
                       : cell.pnl < 0
-                        ? 'border-accent-red/30 bg-accent-red/10 hover:bg-accent-red/20'
+                        ? 'border-accent-red/30 bg-accent-red/10 shadow-[0_0_14px_rgba(255,71,87,0.22)] hover:bg-accent-red/20'
                         : 'border-border bg-bg-hover hover:bg-border'
-                }`}
+                } ${cell.date === todayStr() ? 'ring-1 ring-accent-purple' : ''}`}
             >
               <span className="text-[10px] text-text-muted">{cell.day}</span>
               {cell.count > 0 && (

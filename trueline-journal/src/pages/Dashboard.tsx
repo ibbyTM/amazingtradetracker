@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useStore } from '../store/useStore'
-import { getSummary, edgeLabel } from '../lib/metrics'
+import { getSummary, edgeLabel, sortTrades } from '../lib/metrics'
 import { fmtLongDate, fmtMoney, moneyClass, todayStr } from '../lib/format'
 import { greeting, sessionStatus } from '../lib/markets'
 import Donut from '../components/Donut'
@@ -17,6 +17,10 @@ export default function Dashboard() {
   const settings = useStore((s) => s.settings)
 
   const summary = useMemo(() => getSummary(trades), [trades])
+  const equitySeries = useMemo(() => {
+    let cum = 0
+    return sortTrades(trades).map((t) => (cum += t.pnl))
+  }, [trades])
   const isEmpty = trades.length === 0 && accounts.length === 0
 
   const today = todayStr()
@@ -49,7 +53,7 @@ export default function Dashboard() {
 
       {/* Empty-state welcome */}
       {isEmpty && (
-        <div className="card flex flex-col items-start gap-3 border-accent-purple/40 p-6">
+        <div className="card card-purple flex flex-col items-start gap-3 p-6">
           <h2 className="text-lg font-bold">Welcome to Trueline, {settings.displayName}.</h2>
           <p className="text-sm text-text-muted">
             Start by logging your first trade or adding your funded accounts.
@@ -67,20 +71,27 @@ export default function Dashboard() {
 
       {/* Stats cards */}
       <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-5">
-        <div className="card p-4">
-          <div className="text-xs font-semibold uppercase tracking-wider text-text-muted">
-            Net P&amp;L
-          </div>
-          <div className={`num mt-2 text-2xl font-bold ${moneyClass(summary.netPnl)}`}>
-            {fmtMoney(summary.netPnl)}
-          </div>
-          <div className="mt-1 text-xs text-text-muted">
-            {summary.totalTrades > 0 ? `${summary.totalTrades} trades all-time` : 'No data yet'}
+        <div className="card card-green animate-fade-up overflow-hidden p-4">
+          <Sparkline values={equitySeries} />
+          <span className="watermark -bottom-5 -right-2 text-8xl">$</span>
+          <div className="relative">
+            <div className="text-xs font-semibold uppercase tracking-wider text-text-muted">
+              Net P&amp;L
+            </div>
+            <div className={`num mt-2 text-3xl font-bold ${moneyClass(summary.netPnl)}`}>
+              {fmtMoney(summary.netPnl)}
+              <TrendArrow value={summary.netPnl} />
+            </div>
+            <div className="mt-1 text-xs text-text-muted">
+              {summary.totalTrades > 0 ? `${summary.totalTrades} trades all-time` : 'No data yet'}
+            </div>
           </div>
         </div>
 
         <DonutCard
           label="Win Rate"
+          accent="card-green"
+          watermark="%"
           value={summary.winRate}
           display={`${summary.winRate.toFixed(0)}%`}
           color="var(--accent-green)"
@@ -88,6 +99,8 @@ export default function Dashboard() {
         />
         <DonutCard
           label="Profit Factor"
+          accent="card-blue"
+          watermark="×"
           value={Math.min(summary.profitFactor, 3)}
           max={3}
           display={summary.profitFactor.toFixed(2)}
@@ -95,20 +108,26 @@ export default function Dashboard() {
           sub={summary.totalTrades > 0 ? 'wins ÷ losses' : 'No data yet'}
         />
 
-        <div className="card p-4">
-          <div className="text-xs font-semibold uppercase tracking-wider text-text-muted">
-            Expectancy
-          </div>
-          <div className={`num mt-2 text-2xl font-bold ${moneyClass(summary.expectancy)}`}>
-            {fmtMoney(summary.expectancy)}
-          </div>
-          <div className="mt-1 text-xs text-text-muted">
-            {summary.totalTrades > 0 ? 'per trade' : 'No data yet'}
+        <div className="card card-green animate-fade-up overflow-hidden p-4">
+          <span className="watermark -bottom-5 -right-2 text-8xl">Σ</span>
+          <div className="relative">
+            <div className="text-xs font-semibold uppercase tracking-wider text-text-muted">
+              Expectancy
+            </div>
+            <div className={`num mt-2 text-3xl font-bold ${moneyClass(summary.expectancy)}`}>
+              {fmtMoney(summary.expectancy)}
+              <TrendArrow value={summary.expectancy} />
+            </div>
+            <div className="mt-1 text-xs text-text-muted">
+              {summary.totalTrades > 0 ? 'per trade' : 'No data yet'}
+            </div>
           </div>
         </div>
 
         <DonutCard
           label="Edge Score"
+          accent="card-purple"
+          watermark="★"
           value={summary.edgeScore}
           display={String(summary.edgeScore)}
           color="var(--accent-purple)"
@@ -121,29 +140,28 @@ export default function Dashboard() {
         <div className="space-y-4 xl:col-span-2">
           <EquityCurve trades={trades} />
           <PnlCalendar trades={trades} />
-          <EdgeRadar breakdown={summary.breakdown} score={summary.edgeScore} />
           <RecentTrades trades={trades} />
         </div>
 
-        {/* Right panel — Today */}
+        {/* Right panel — Today → Prop Guardrails → Edge Breakdown */}
         <div className="space-y-4">
-          <div className="card p-5">
+          <div className="card card-blue animate-fade-up p-5">
             <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-text-muted">
               Today
             </h3>
             <div className="grid grid-cols-3 gap-3 text-center">
               <div>
-                <div className={`num text-lg font-bold ${moneyClass(todayPnl)}`}>
+                <div className={`num text-xl font-bold ${moneyClass(todayPnl)}`}>
                   {fmtMoney(todayPnl, 0)}
                 </div>
                 <div className="text-[11px] text-text-muted">P&amp;L</div>
               </div>
               <div>
-                <div className="num text-lg font-bold">{todayTrades.length}</div>
+                <div className="num text-xl font-bold">{todayTrades.length}</div>
                 <div className="text-[11px] text-text-muted">Trades</div>
               </div>
               <div>
-                <div className="num text-lg font-bold">
+                <div className="num text-xl font-bold">
                   <span className="text-accent-green">{todayWins}</span>
                   <span className="text-text-muted">/</span>
                   <span className="text-accent-red">{todayLosses}</span>
@@ -153,14 +171,56 @@ export default function Dashboard() {
             </div>
           </div>
           <Guardrails accounts={accounts} trades={trades} />
+          <EdgeRadar breakdown={summary.breakdown} score={summary.edgeScore} />
         </div>
       </div>
     </div>
   )
 }
 
+/** Small ▲/▼ next to a signed dollar metric. */
+function TrendArrow({ value }: { value: number }) {
+  if (value === 0) return null
+  return (
+    <span className={`ml-2 align-middle text-sm ${moneyClass(value)}`}>
+      {value > 0 ? '▲' : '▼'}
+    </span>
+  )
+}
+
+/** Faint cumulative-P&L sparkline rendered behind the Net P&L card. */
+function Sparkline({ values }: { values: number[] }) {
+  if (values.length < 2) return null
+  const min = Math.min(...values, 0)
+  const max = Math.max(...values, 0)
+  const range = max - min || 1
+  const points = values
+    .map(
+      (v, i) =>
+        `${(i / (values.length - 1)) * 100},${100 - ((v - min) / range) * 100}`,
+    )
+    .join(' ')
+  return (
+    <svg
+      className="pointer-events-none absolute inset-x-0 bottom-0 h-3/5 w-full opacity-[0.14]"
+      viewBox="0 0 100 100"
+      preserveAspectRatio="none"
+    >
+      <polyline
+        points={points}
+        fill="none"
+        stroke="var(--accent-green)"
+        strokeWidth={2}
+        vectorEffect="non-scaling-stroke"
+      />
+    </svg>
+  )
+}
+
 function DonutCard({
   label,
+  accent,
+  watermark,
   value,
   max = 100,
   display,
@@ -168,6 +228,8 @@ function DonutCard({
   sub,
 }: {
   label: string
+  accent: string
+  watermark: string
   value: number
   max?: number
   display: string
@@ -175,11 +237,12 @@ function DonutCard({
   sub: string
 }) {
   return (
-    <div className="card flex items-center gap-4 p-4">
+    <div className={`card ${accent} animate-fade-up flex items-center gap-4 overflow-hidden p-4`}>
+      <span className="watermark -bottom-5 -right-2 text-8xl">{watermark}</span>
       <Donut value={value} max={max} color={color}>
-        <span className="num text-sm font-bold">{display}</span>
+        <span className="num text-base font-bold">{display}</span>
       </Donut>
-      <div>
+      <div className="relative">
         <div className="text-xs font-semibold uppercase tracking-wider text-text-muted">
           {label}
         </div>

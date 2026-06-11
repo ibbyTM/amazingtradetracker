@@ -41,7 +41,10 @@ export default function Donut({
           strokeLinecap="round"
           strokeDasharray={c}
           strokeDashoffset={c * (1 - fraction)}
-          style={{ transition: 'stroke-dashoffset 0.9s ease' }}
+          style={{
+            transition: 'stroke-dashoffset 0.9s ease',
+            filter: `drop-shadow(0 0 5px ${color})`,
+          }}
         />
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">{children}</div>

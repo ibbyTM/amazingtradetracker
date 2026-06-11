@@ -38,8 +38,8 @@ export default function Sidebar() {
         />
       )}
       <aside
-        className={`fixed left-0 top-0 z-50 flex h-full w-[220px] flex-col border-r border-border
-          bg-bg-card transition-all duration-200 ${open ? 'max-md:w-[220px]' : 'max-md:w-14'}`}
+        className={`sidebar-gradient fixed left-0 top-0 z-50 flex h-full w-[220px] flex-col border-r
+          border-border transition-all duration-200 ${open ? 'max-md:w-[220px]' : 'max-md:w-14'}`}
       >
         <div className="flex items-center gap-2 px-4 py-5">
           <button
@@ -77,7 +77,7 @@ export default function Sidebar() {
                     `mb-0.5 flex items-center gap-3 rounded-r-lg border-l-2 px-3 py-2 text-sm
                      font-medium transition-colors ${
                        isActive
-                         ? 'border-accent-purple bg-bg-hover text-text-primary'
+                         ? 'nav-active border-accent-purple bg-bg-hover text-text-primary'
                          : 'border-transparent text-text-muted hover:bg-bg-hover hover:text-text-primary'
                      }`
                   }

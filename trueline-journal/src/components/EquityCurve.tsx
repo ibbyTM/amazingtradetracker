@@ -37,7 +37,7 @@ export default function EquityCurve({ trades }: { trades: Trade[] }) {
   }, [trades, range])
 
   return (
-    <div className="card p-5">
+    <div className="card animate-fade-up overflow-hidden p-5">
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-sm font-bold uppercase tracking-wider text-text-muted">
           Equity Curve
@@ -57,7 +57,8 @@ export default function EquityCurve({ trades }: { trades: Trade[] }) {
         </div>
       </div>
 
-      <div className="relative h-64">
+      <div className="equity-glow relative h-64">
+        <div className="equity-aurora" />
         {data.length === 0 && (
           <div className="absolute inset-0 z-10 flex items-center justify-center text-sm text-text-muted">
             No data yet
@@ -91,9 +92,11 @@ export default function EquityCurve({ trades }: { trades: Trade[] }) {
                 if (!active || !payload?.length) return null
                 const p = payload[0].payload as { label: string; cum: number }
                 return (
-                  <div className="card px-3 py-2 text-xs">
-                    <div className="text-text-muted">{p.label}</div>
-                    <div className={`num font-semibold ${moneyClass(p.cum)}`}>
+                  <div className="card border-accent-green/30 px-3.5 py-2.5">
+                    <div className="mb-0.5 text-[11px] uppercase tracking-wider text-text-muted">
+                      {p.label}
+                    </div>
+                    <div className={`num text-base font-bold ${moneyClass(p.cum)}`}>
                       {fmtMoney(p.cum)}
                     </div>
                   </div>

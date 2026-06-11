@@ -54,7 +54,41 @@
 
 @layer components {
   .card {
-    @apply rounded-xl bg-bg-card border border-border shadow-card;
+    @apply relative rounded-xl border border-border;
+    --card-glow: rgba(240, 244, 255, 0.06);
+    /* dot-pattern texture layered over a subtle vertical gradient */
+    background-image:
+      radial-gradient(rgba(240, 244, 255, 0.022) 1px, transparent 1px),
+      linear-gradient(160deg, #141720 0%, #1a1f2e 100%);
+    background-size: 18px 18px, 100% 100%;
+    box-shadow:
+      0 4px 20px rgba(0, 0, 0, 0.45),
+      inset 0 1px 0 rgba(240, 244, 255, 0.04);
+    transition: box-shadow 0.25s ease, border-color 0.25s ease;
+  }
+  .card:hover {
+    box-shadow:
+      0 8px 30px rgba(0, 0, 0, 0.55),
+      0 0 24px var(--card-glow),
+      inset 0 1px 0 rgba(240, 244, 255, 0.05);
+  }
+  /* coloured top accents: green = positive metrics, purple = edge/score,
+     blue = neutral */
+  .card-green {
+    border-top: 2px solid var(--accent-green);
+    --card-glow: rgba(0, 212, 170, 0.16);
+  }
+  .card-blue {
+    border-top: 2px solid var(--accent-blue);
+    --card-glow: rgba(59, 130, 246, 0.16);
+  }
+  .card-purple {
+    border-top: 2px solid var(--accent-purple);
+    --card-glow: rgba(168, 85, 247, 0.18);
+  }
+  .watermark {
+    @apply pointer-events-none absolute select-none font-mono font-extrabold leading-none;
+    color: rgba(240, 244, 255, 0.04);
   }
   .field {
     @apply w-full rounded-lg bg-bg-primary border border-border px-3 py-2 text-sm text-text-primary
@@ -68,10 +102,22 @@
       transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
   }
   .btn-primary {
-    @apply btn bg-accent-purple text-white hover:bg-accent-purple/85;
+    @apply btn text-white;
+    background-image: linear-gradient(135deg, #b06cf9 0%, #7c3aed 100%);
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+  }
+  .btn-primary:hover {
+    box-shadow: 0 0 20px rgba(168, 85, 247, 0.45);
+    transform: translateY(-1px);
   }
   .btn-green {
-    @apply btn bg-accent-green text-black hover:bg-accent-green/85;
+    @apply btn text-black;
+    background-image: linear-gradient(135deg, #2ee6c0 0%, #00a886 100%);
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+  }
+  .btn-green:hover {
+    box-shadow: 0 0 20px rgba(0, 212, 170, 0.45);
+    transform: translateY(-1px);
   }
   .btn-ghost {
     @apply btn bg-bg-hover text-text-primary hover:bg-border;
@@ -106,4 +152,69 @@
   .td {
     @apply px-3 py-2.5 text-sm;
   }
+
+  /* glow helpers for donuts / charts */
+  .glow-teal {
+    filter: drop-shadow(0 0 6px rgba(0, 212, 170, 0.55));
+  }
+  .glow-blue {
+    filter: drop-shadow(0 0 6px rgba(59, 130, 246, 0.55));
+  }
+  .glow-purple {
+    filter: drop-shadow(0 0 7px rgba(168, 85, 247, 0.6));
+  }
+
+  .sidebar-gradient {
+    background-image: linear-gradient(180deg, #0d0f14 0%, #111827 100%);
+  }
+  .nav-active {
+    box-shadow:
+      inset 3px 0 10px -4px rgba(168, 85, 247, 0.7),
+      0 0 14px rgba(168, 85, 247, 0.12);
+  }
+
+  /* glow the equity line / radar polygon without touching grid lines */
+  .equity-glow .recharts-area-curve {
+    filter: drop-shadow(0 0 6px rgba(0, 212, 170, 0.55));
+  }
+  .radar-glow .recharts-polygon {
+    filter: drop-shadow(0 0 10px rgba(168, 85, 247, 0.55));
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.animate-fade-up {
+  animation: fade-up 0.5s ease both;
+}
+
+@keyframes aurora-drift {
+  0%,
+  100% {
+    transform: translateX(-6%) scale(1);
+    opacity: 0.55;
+  }
+  50% {
+    transform: translateX(6%) scale(1.06);
+    opacity: 0.85;
+  }
+}
+/* soft animated teal/purple glow behind the equity curve */
+.equity-aurora {
+  position: absolute;
+  inset: 8%;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 30% 65%, rgba(0, 212, 170, 0.16), transparent 60%),
+    radial-gradient(ellipse at 72% 35%, rgba(168, 85, 247, 0.14), transparent 60%);
+  filter: blur(30px);
+  animation: aurora-drift 9s ease-in-out infinite;
 }

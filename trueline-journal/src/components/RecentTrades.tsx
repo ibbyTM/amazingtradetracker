@@ -10,7 +10,7 @@ export default function RecentTrades({ trades }: { trades: Trade[] }) {
   const recent = sortTrades(trades).slice(-10).reverse()
 
   return (
-    <div className="card p-5">
+    <div className="card animate-fade-up p-5">
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-sm font-bold uppercase tracking-wider text-text-muted">
           Recent Trades

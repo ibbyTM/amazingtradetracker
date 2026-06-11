@@ -1,0 +1,339 @@
+import { useMemo, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { useStore } from '../store/useStore'
+import type { Trade, SymbolCode } from '../store/types'
+import { SYMBOLS, SYMBOL_COLORS } from '../lib/markets'
+import { fmtMoney, fmtPct, fmtR, moneyClass } from '../lib/format'
+import { Metrics } from '../lib/metrics'
+
+type SortKey = 'date' | 'symbol' | 'side' | 'setup' | 'size' | 'rMultiple' | 'pnl'
+type Result = 'all' | 'win' | 'loss' | 'be'
+
+const COLUMNS: { key: SortKey | string; label: string; sortable: boolean }[] = [
+  { key: 'date', label: 'Date', sortable: true },
+  { key: 'time', label: 'Time', sortable: false },
+  { key: 'symbol', label: 'Symbol', sortable: true },
+  { key: 'side', label: 'Side', sortable: true },
+  { key: 'setup', label: 'Setup', sortable: true },
+  { key: 'size', label: 'Size', sortable: true },
+  { key: 'entryPrice', label: 'Entry', sortable: false },
+  { key: 'exitPrice', label: 'Exit', sortable: false },
+  { key: 'stopPrice', label: 'Stop', sortable: false },
+  { key: 'rMultiple', label: 'R', sortable: true },
+  { key: 'pnl', label: 'P&L', sortable: true },
+  { key: 'account', label: 'Account', sortable: false },
+]
+
+export default function Trades() {
+  const navigate = useNavigate()
+  const { trades, accounts, deleteTrade } = useStore()
+
+  const [symbols, setSymbols] = useState<SymbolCode[]>([])
+  const [side, setSide] = useState<'all' | 'LONG' | 'SHORT'>('all')
+  const [setupQuery, setSetupQuery] = useState('')
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
+  const [result, setResult] = useState<Result>('all')
+  const [accountId, setAccountId] = useState('all')
+  const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: 'date', dir: -1 })
+  const [expanded, setExpanded] = useState<string | null>(null)
+
+  const filtered = useMemo(() => {
+    let out = trades.filter((t) => {
+      if (symbols.length > 0 && !symbols.includes(t.symbol)) return false
+      if (side !== 'all' && t.side !== side) return false
+      if (setupQuery && !t.setup.toLowerCase().includes(setupQuery.toLowerCase())) return false
+      if (dateFrom && t.date < dateFrom) return false
+      if (dateTo && t.date > dateTo) return false
+      if (result === 'win' && t.pnl <= 0) return false
+      if (result === 'loss' && t.pnl >= 0) return false
+      if (result === 'be' && t.pnl !== 0) return false
+      if (accountId !== 'all' && t.accountId !== accountId) return false
+      return true
+    })
+    out = [...out].sort((a, b) => {
+      const { key, dir } = sort
+      if (key === 'date') return `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`) * dir
+      const av = a[key]
+      const bv = b[key]
+      if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * dir
+      return String(av).localeCompare(String(bv)) * dir
+    })
+    return out
+  }, [trades, symbols, side, setupQuery, dateFrom, dateTo, result, accountId, sort])
+
+  // Summary for the current filter — computed by the F# layer.
+  const summary = useMemo(() => {
+    const pnls = filtered.map((t) => t.pnl)
+    const rs = filtered.map((t) => t.rMultiple)
+    return {
+      count: filtered.length,
+      pnl: pnls.reduce((a, b) => a + b, 0),
+      winRate: Metrics.calcWinRate(pnls),
+      avgR: Metrics.calcAvgR(rs),
+    }
+  }, [filtered])
+
+  function toggleSymbol(s: SymbolCode) {
+    setSymbols((cur) => (cur.includes(s) ? cur.filter((x) => x !== s) : [...cur, s]))
+  }
+
+  function clickSort(key: SortKey) {
+    setSort((cur) => (cur.key === key ? { key, dir: cur.dir === 1 ? -1 : 1 } : { key, dir: -1 }))
+  }
+
+  function exportCsv() {
+    const header = [
+      'date', 'time', 'symbol', 'side', 'setup', 'size', 'entryPrice', 'exitPrice',
+      'stopPrice', 'duration', 'rMultiple', 'pnl', 'tags', 'account', 'notes',
+    ]
+    const accountName = (id: string) => accounts.find((a) => a.id === id)?.name ?? ''
+    const esc = (v: string | number) => `"${String(v).replace(/"/g, '""')}"`
+    const rows = filtered.map((t) =>
+      [
+        t.date, t.time, t.symbol, t.side, t.setup, t.size, t.entryPrice, t.exitPrice,
+        t.stopPrice, t.duration, t.rMultiple, t.pnl, t.tags.join('|'),
+        accountName(t.accountId), t.notes,
+      ]
+        .map(esc)
+        .join(','),
+    )
+    const blob = new Blob([[header.join(','), ...rows].join('\n')], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `trueline-trades-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  function handleDelete(id: string) {
+    if (window.confirm('Delete this trade? This cannot be undone.')) deleteTrade(id)
+  }
+
+  return (
+    <div className="space-y-4">
+      <header className="flex items-center justify-between">
+        <h1 className="text-xl font-bold">Trades</h1>
+        <button className="btn-ghost" onClick={exportCsv} disabled={filtered.length === 0}>
+          ⬇ Export CSV
+        </button>
+      </header>
+
+      {/* Filter bar */}
+      <div className="card space-y-3 p-4">
+        <div className="flex flex-wrap items-center gap-2">
+          {SYMBOLS.map((s) => (
+            <button
+              key={s}
+              onClick={() => toggleSymbol(s)}
+              className={`badge cursor-pointer px-2.5 py-1 transition-colors ${
+                symbols.includes(s)
+                  ? 'bg-accent-purple text-white'
+                  : 'bg-bg-hover text-text-muted hover:text-text-primary'
+              }`}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+          <select className="field" value={side} onChange={(e) => setSide(e.target.value as typeof side)}>
+            <option value="all">All sides</option>
+            <option value="LONG">LONG</option>
+            <option value="SHORT">SHORT</option>
+          </select>
+          <input
+            className="field"
+            placeholder="Search setup…"
+            value={setupQuery}
+            onChange={(e) => setSetupQuery(e.target.value)}
+          />
+          <input type="date" className="field" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
+          <input type="date" className="field" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
+          <select className="field" value={result} onChange={(e) => setResult(e.target.value as Result)}>
+            <option value="all">All results</option>
+            <option value="win">Win</option>
+            <option value="loss">Loss</option>
+            <option value="be">Break-even</option>
+          </select>
+          <select className="field" value={accountId} onChange={(e) => setAccountId(e.target.value)}>
+            <option value="all">All accounts</option>
+            {accounts.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Summary bar */}
+      <div className="card flex flex-wrap items-center gap-x-8 gap-y-2 px-5 py-3 text-sm">
+        <span>
+          <span className="text-text-muted">Trades </span>
+          <span className="num font-semibold">{summary.count}</span>
+        </span>
+        <span>
+          <span className="text-text-muted">P&amp;L </span>
+          <span className={`num font-semibold ${moneyClass(summary.pnl)}`}>
+            {fmtMoney(summary.pnl)}
+          </span>
+        </span>
+        <span>
+          <span className="text-text-muted">Win rate </span>
+          <span className="num font-semibold">{fmtPct(summary.winRate)}</span>
+        </span>
+        <span>
+          <span className="text-text-muted">Avg R </span>
+          <span className={`num font-semibold ${moneyClass(summary.avgR)}`}>
+            {fmtR(summary.avgR)}
+          </span>
+        </span>
+      </div>
+
+      {/* Table */}
+      <div className="card overflow-x-auto">
+        {filtered.length === 0 ? (
+          <div className="p-8 text-center text-sm text-text-muted">
+            {trades.length === 0 ? (
+              <>
+                No trades logged yet.{' '}
+                <Link to="/log" className="font-semibold text-accent-purple hover:underline">
+                  Hit + Log Trade
+                </Link>{' '}
+                to get started.
+              </>
+            ) : (
+              'No trades match the current filters.'
+            )}
+          </div>
+        ) : (
+          <table className="w-full min-w-[900px]">
+            <thead>
+              <tr className="border-b border-border">
+                {COLUMNS.map((c) => (
+                  <th
+                    key={c.key}
+                    className={`th ${c.sortable ? 'cursor-pointer hover:text-text-primary' : ''}`}
+                    onClick={() => c.sortable && clickSort(c.key as SortKey)}
+                  >
+                    {c.label}
+                    {sort.key === c.key && (sort.dir === -1 ? ' ↓' : ' ↑')}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((t) => (
+                <TradeRow
+                  key={t.id}
+                  trade={t}
+                  accountName={accounts.find((a) => a.id === t.accountId)?.name ?? '—'}
+                  expanded={expanded === t.id}
+                  onToggle={() => setExpanded(expanded === t.id ? null : t.id)}
+                  onEdit={() => navigate(`/log?edit=${t.id}`)}
+                  onDelete={() => handleDelete(t.id)}
+                />
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function TradeRow({
+  trade: t,
+  accountName,
+  expanded,
+  onToggle,
+  onEdit,
+  onDelete,
+}: {
+  trade: Trade
+  accountName: string
+  expanded: boolean
+  onToggle: () => void
+  onEdit: () => void
+  onDelete: () => void
+}) {
+  return (
+    <>
+      <tr
+        className="cursor-pointer border-b border-border/50 transition-colors hover:bg-bg-hover"
+        onClick={onToggle}
+      >
+        <td className="td num">{t.date}</td>
+        <td className="td num text-text-muted">{t.time}</td>
+        <td className="td">
+          <span className={`badge ${SYMBOL_COLORS[t.symbol]}`}>{t.symbol}</span>
+        </td>
+        <td className="td">
+          <span
+            className={`badge ${
+              t.side === 'LONG'
+                ? 'bg-accent-green/15 text-accent-green'
+                : 'bg-accent-red/15 text-accent-red'
+            }`}
+          >
+            {t.side}
+          </span>
+        </td>
+        <td className="td">{t.setup || '—'}</td>
+        <td className="td num">{t.size}</td>
+        <td className="td num">{t.entryPrice}</td>
+        <td className="td num">{t.exitPrice}</td>
+        <td className="td num text-text-muted">{t.stopPrice || '—'}</td>
+        <td className={`td num ${moneyClass(t.rMultiple)}`}>{fmtR(t.rMultiple)}</td>
+        <td className={`td num font-semibold ${moneyClass(t.pnl)}`}>{fmtMoney(t.pnl)}</td>
+        <td className="td text-text-muted">{accountName}</td>
+      </tr>
+      {expanded && (
+        <tr className="border-b border-border/50 bg-bg-primary/60">
+          <td colSpan={12} className="px-5 py-4">
+            <div className="flex flex-col gap-4 md:flex-row">
+              <div className="flex-1 space-y-2 text-sm">
+                <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+                  <Info label="Duration" value={t.duration || '—'} />
+                  <Info label="Tags" value={t.tags.length ? t.tags.join(', ') : '—'} />
+                  <Info label="Account" value={accountName} />
+                  <Info label="Points" value={String(Math.abs(t.exitPrice - t.entryPrice))} />
+                </div>
+                <div>
+                  <div className="field-label">Notes</div>
+                  <p className="text-text-muted">{t.notes || 'No notes.'}</p>
+                </div>
+                <div className="flex gap-2 pt-1">
+                  <button className="btn-ghost !py-1.5" onClick={(e) => { e.stopPropagation(); onEdit() }}>
+                    Edit
+                  </button>
+                  <button className="btn-danger !py-1.5" onClick={(e) => { e.stopPropagation(); onDelete() }}>
+                    Delete
+                  </button>
+                </div>
+              </div>
+              {t.screenshotUrl && (
+                <img
+                  src={t.screenshotUrl}
+                  alt="Trade screenshot"
+                  className="max-h-56 rounded-lg border border-border object-contain"
+                />
+              )}
+            </div>
+          </td>
+        </tr>
+      )}
+    </>
+  )
+}
+
+function Info({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <div className="field-label">{label}</div>
+      <div className="num text-sm">{value}</div>
+    </div>
+  )
+}

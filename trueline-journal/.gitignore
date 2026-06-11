@@ -1,0 +1,15 @@
+node_modules/
+dist/
+
+# Fable / .NET
+src/fsharp/build/
+obj/
+bin/
+.fable/
+
+# real API keys go here, never in .env
+.env.local
+.env.*.local
+
+*.log
+.DS_Store

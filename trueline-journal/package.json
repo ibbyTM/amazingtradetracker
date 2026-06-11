@@ -1,0 +1,35 @@
+{
+  "name": "trueline-journal",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "npm run fable:build && concurrently -k -n fable,vite -c magenta,cyan \"npm:fable:watch\" \"npm:vite:dev\"",
+    "vite:dev": "vite",
+    "fable:build": "dotnet fable TruelineJournal.fsproj -o src/fsharp/build -e .js",
+    "fable:watch": "dotnet fable watch TruelineJournal.fsproj -o src/fsharp/build -e .js",
+    "build": "npm run fable:build && tsc && vite build",
+    "preview": "vite preview",
+    "postinstall": "dotnet tool restore || echo '[trueline] .NET SDK 10+ not found - install it to compile the F# layer'"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.104.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-markdown": "^10.1.0",
+    "react-router-dom": "^6.30.4",
+    "recharts": "^2.15.4",
+    "zustand": "^4.5.7"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.31",
+    "@types/react-dom": "^18.3.7",
+    "@vitejs/plugin-react": "^4.7.0",
+    "autoprefixer": "^10.5.0",
+    "concurrently": "^10.0.3",
+    "postcss": "^8.5.15",
+    "tailwindcss": "^3.4.19",
+    "typescript": "^6.0.3",
+    "vite": "^5.4.21"
+  }
+}

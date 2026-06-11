@@ -1,0 +1,10 @@
+trueline-journal/node_modules
+trueline-journal/dist
+trueline-journal/src/fsharp/build
+trueline-journal/obj
+trueline-journal/bin
+trueline-journal/.fable
+trueline-journal/.env.local
+trueline-journal/.env.*.local
+**/*.log
+.git

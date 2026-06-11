@@ -1,0 +1,10 @@
+node_modules
+dist
+src/fsharp/build
+obj
+bin
+.fable
+.env.local
+.env.*.local
+*.log
+.git

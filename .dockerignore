@@ -1,4 +1,6 @@
 trueline-journal/node_modules
+trueline-journal/server/node_modules
+trueline-journal/server/data
 trueline-journal/dist
 trueline-journal/src/fsharp/build
 trueline-journal/obj

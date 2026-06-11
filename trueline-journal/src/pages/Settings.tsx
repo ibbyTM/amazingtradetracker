@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { useStore, type ExportedData } from '../store/useStore'
+import { SYNC_LABELS, clearPasscode, useSyncStore } from '../store/useSyncStore'
 import type { RCalcMethod, SymbolCode } from '../store/types'
 import { SYMBOLS } from '../lib/markets'
 import Modal from '../components/Modal'
@@ -121,6 +122,8 @@ export default function Settings() {
         ))}
       </div>
 
+      <SyncCard />
+
       <div className="card space-y-4 p-6">
         <h2 className="text-sm font-bold uppercase tracking-wider text-text-muted">
           Data management
@@ -171,6 +174,45 @@ export default function Settings() {
             </button>
           </div>
         </Modal>
+      )}
+    </div>
+  )
+}
+
+function SyncCard() {
+  const status = useSyncStore((s) => s.status)
+  const error = useSyncStore((s) => s.error)
+
+  return (
+    <div className="card space-y-3 p-6">
+      <h2 className="text-sm font-bold uppercase tracking-wider text-text-muted">
+        Device sync
+      </h2>
+      <p className="text-sm">
+        Status: <span className="font-semibold">{SYNC_LABELS[status]}</span>
+        {status === 'error' && <span className="ml-2 text-accent-red">{error}</span>}
+      </p>
+      {status === 'off' ? (
+        <p className="text-xs text-text-muted">
+          No sync server detected — data stays in this browser only. The deployed (Railway)
+          version syncs automatically across your devices.
+        </p>
+      ) : (
+        <>
+          <p className="text-xs text-text-muted">
+            Your journal is stored on the server and shared by every device that unlocks it
+            with the passcode. The last edit wins when two devices change data at once.
+          </p>
+          <button
+            className="btn-ghost"
+            onClick={() => {
+              clearPasscode()
+              void useSyncStore.getState().init()
+            }}
+          >
+            Re-enter passcode…
+          </button>
+        </>
       )}
     </div>
   )

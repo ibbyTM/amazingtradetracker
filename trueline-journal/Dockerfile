@@ -22,12 +22,14 @@ RUN npm ci \
     && npm run build
 
 FROM node:22-alpine
-RUN npm install -g serve@14
 WORKDIR /app
+COPY --from=build /app/server ./server
+RUN cd server && npm ci --omit=dev
 COPY --from=build /app/dist ./dist
 
-# `serve -s` rewrites unknown paths to index.html (SPA routing for
-# /dashboard, /trades, ...). Railway injects PORT.
+# server/index.mjs serves dist/ with SPA fallback, persists journal data
+# under DATA_DIR (mount a volume there!), and proxies AI calls.
+# Runtime env: PORT (Railway injects), APP_PASSCODE, DATA_DIR, ANTHROPIC_API_KEY.
 ENV PORT=3000
 EXPOSE 3000
-CMD ["sh", "-c", "serve -s dist -l ${PORT:-3000}"]
+CMD ["node", "server/index.mjs"]

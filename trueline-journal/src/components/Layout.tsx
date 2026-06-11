@@ -1,6 +1,7 @@
 import { Outlet } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import AiAssistant from './AiAssistant'
+import PasscodeGate from './PasscodeGate'
 
 export default function Layout() {
   return (
@@ -10,6 +11,7 @@ export default function Layout() {
         <Outlet />
       </main>
       <AiAssistant />
+      <PasscodeGate />
     </div>
   )
 }

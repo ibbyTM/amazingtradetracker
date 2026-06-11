@@ -1,5 +1,14 @@
 import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
+import { SYNC_LABELS, useSyncStore } from '../store/useSyncStore'
+
+const SYNC_DOTS: Record<string, string> = {
+  off: 'bg-text-muted',
+  locked: 'bg-accent-red',
+  syncing: 'bg-accent-yellow',
+  synced: 'bg-accent-green',
+  error: 'bg-accent-red',
+}
 
 const SECTIONS: { title: string; items: { to: string; icon: string; label: string }[] }[] = [
   {
@@ -28,6 +37,7 @@ export default function Sidebar() {
   // Below 768px the sidebar collapses to an icon-only rail; the hamburger
   // expands it into a full overlay.
   const [open, setOpen] = useState(false)
+  const syncStatus = useSyncStore((s) => s.status)
 
   return (
     <>
@@ -101,8 +111,10 @@ export default function Sidebar() {
           className={`flex items-center gap-2 border-t border-border px-4 py-3 text-xs
             text-text-muted ${open ? '' : 'max-md:justify-center'}`}
         >
-          <span className="h-2 w-2 rounded-full bg-accent-green" />
-          <span className={open ? '' : 'max-md:hidden'}>Trueline AI</span>
+          <span className={`h-2 w-2 rounded-full ${SYNC_DOTS[syncStatus]}`} />
+          <span className={open ? '' : 'max-md:hidden'}>
+            Trueline AI · {SYNC_LABELS[syncStatus]}
+          </span>
         </div>
       </aside>
     </>

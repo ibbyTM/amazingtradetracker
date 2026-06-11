@@ -74,6 +74,25 @@ trueline-journal/
 └── tailwind.config.js
 ```
 
+## Deploying (Railway) & cross-device sync
+
+The repo ships a multi-stage `Dockerfile` plus a small Express server
+(`server/index.mjs`) that serves the app, **syncs your journal across devices**
+(stored as JSON under `DATA_DIR`), and **proxies AI calls** so the Anthropic
+key never reaches the browser.
+
+Railway service variables:
+
+| Variable             | Purpose                                                        |
+| -------------------- | -------------------------------------------------------------- |
+| `APP_PASSCODE`       | Required passcode for the app/API — set this or anyone can read your data |
+| `ANTHROPIC_API_KEY`  | Enables the Trueline AI coach via the server-side proxy        |
+| `DATA_DIR`           | Set to `/data` and attach a Railway **volume** mounted at `/data`, or your journal resets on each deploy |
+
+Each device asks for the passcode once, then loads the server copy and pushes
+edits automatically (last write wins). Plain `npm run dev` has no sync server —
+the app silently runs in local-only mode.
+
 ## Notes
 
 - All data is stored in your browser's localStorage (`trueline-journal` key). Use

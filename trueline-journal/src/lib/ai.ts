@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { useStore } from '../store/useStore'
 import type { ChatMessage } from '../store/useChatStore'
+import { getPasscode } from '../store/useSyncStore'
 import { getSummary, sortTrades } from './metrics'
 import { accountStatus } from './guardrails'
 import { fmtMoney, fmtR, todayStr } from './format'
@@ -110,6 +111,35 @@ export async function askTrueline(
     ...history.map((m) => ({ role: m.role, content: m.content })),
     { role: 'user' as const, content: `${getPageContext(page)}\n\n---\n\n${userText}` },
   ]
+
+  // Prefer the server proxy — it keeps the API key server-side when deployed.
+  let proxy: Response | null = null
+  try {
+    proxy = await fetch('/api/ai', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-trueline-pass': getPasscode() },
+      body: JSON.stringify({ system: SYSTEM_PROMPT, messages }),
+    })
+  } catch {
+    proxy = null // no server reachable — fall through to the browser call
+  }
+  if (proxy) {
+    if (proxy.ok) {
+      const data = (await proxy.json()) as { text?: string }
+      return data.text || '(no response)'
+    }
+    if (proxy.status === 401) {
+      throw new Error('App is locked — enter your sync passcode first.')
+    }
+    // 404 = no API (vite dev); 503 = server has no key. Fall through.
+  }
+
+  if (!import.meta.env.VITE_ANTHROPIC_API_KEY) {
+    throw new Error(
+      'AI not configured. Set ANTHROPIC_API_KEY on the server (Railway variable), ' +
+        'or VITE_ANTHROPIC_API_KEY in .env.local for local dev.',
+    )
+  }
 
   const response = await client.messages.create({
     model: AI_MODEL,

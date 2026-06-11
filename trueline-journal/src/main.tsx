@@ -2,6 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { hello } from '@fable/Main.js'
+import { useSyncStore } from './store/useSyncStore'
 import Layout from './components/Layout'
 import Dashboard from './pages/Dashboard'
 import LogTrade from './pages/LogTrade'
@@ -14,6 +15,9 @@ import './index.css'
 
 // Smoke test: proves the F# → Fable → JS pipeline is wired up.
 console.info(hello())
+
+// Connect to the sync server if one is hosting us (no-op in plain vite dev).
+void useSyncStore.getState().init()
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

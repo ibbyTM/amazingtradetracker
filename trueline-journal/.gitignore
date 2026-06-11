@@ -11,5 +11,8 @@ bin/
 .env.local
 .env.*.local
 
+# local sync-server data
+server/data/
+
 *.log
 .DS_Store

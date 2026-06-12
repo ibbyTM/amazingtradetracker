@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
+import { SYNC_DOTS, SYNC_LABELS, useSyncStore } from '../store/useSyncStore'
 
 const TABS = [
   { to: '/dashboard', icon: '◧', label: 'Dashboard' },
@@ -19,6 +20,7 @@ export default function MobileTabBar() {
   const [moreOpen, setMoreOpen] = useState(false)
   const location = useLocation()
   const moreActive = MORE_ITEMS.some((m) => location.pathname.startsWith(m.to))
+  const syncStatus = useSyncStore((s) => s.status)
 
   return (
     <>
@@ -52,6 +54,10 @@ export default function MobileTabBar() {
             {item.label}
           </NavLink>
         ))}
+        <div className="mt-1 flex items-center gap-2 border-t border-border px-3 pt-2 text-xs text-text-muted">
+          <span className={`h-2 w-2 rounded-full ${SYNC_DOTS[syncStatus]}`} />
+          Trueline AI · {SYNC_LABELS[syncStatus]}
+        </div>
       </div>
 
       {/* bottom tab bar */}

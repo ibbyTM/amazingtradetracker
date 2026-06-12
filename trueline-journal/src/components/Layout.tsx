@@ -3,6 +3,7 @@ import Sidebar from './Sidebar'
 import MobileTabBar from './MobileTabBar'
 import AiAssistant from './AiAssistant'
 import PasscodeGate from './PasscodeGate'
+import Toasts from './Toasts'
 
 export default function Layout() {
   return (
@@ -15,6 +16,7 @@ export default function Layout() {
       <MobileTabBar />
       <AiAssistant />
       <PasscodeGate />
+      <Toasts />
     </div>
   )
 }

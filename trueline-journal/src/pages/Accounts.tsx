@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useStore } from '../store/useStore'
+import { toast } from '../store/useToastStore'
 import type { Account, Platform } from '../store/types'
 import { PLATFORMS } from '../lib/markets'
 import { accountStatus, barColor } from '../lib/guardrails'
@@ -83,6 +84,7 @@ export default function Accounts() {
     setForm(emptyForm)
     setEditingId(null)
     setBalanceTouched(false)
+    toast(editingId ? 'Account updated ✓' : 'Account added ✓')
   }
 
   function startEdit(a: Account) {

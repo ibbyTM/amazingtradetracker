@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { calcPoints, calcRMultiple, calcTradePnl } from '@fable/Metrics.js'
 import { useStore } from '../store/useStore'
+import { toast } from '../store/useToastStore'
 import type { Side, SymbolCode, Trade } from '../store/types'
 import { SYMBOLS, pointValue } from '../lib/markets'
 import { durationBetween, fmtMoney, fmtR, moneyClass, nowTime, todayStr } from '../lib/format'
@@ -47,6 +48,8 @@ export default function LogTrade() {
     screenshotUrl: '',
   }))
   const [errors, setErrors] = useState<Record<string, string>>({})
+  // Blocks double-taps on Save from logging the same trade twice.
+  const savedRef = useRef(false)
 
   // Pre-fill when arriving via "Edit" on the trades page.
   useEffect(() => {
@@ -119,7 +122,34 @@ export default function LogTrade() {
   }
 
   function handleSave() {
-    if (!validate() || !calc) return
+    if (savedRef.current) return
+    if (!validate() || !calc) {
+      toast('Check the highlighted fields', 'error')
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      return
+    }
+
+    // Catch accidental re-entry of the same trade (no feedback used to make
+    // people tap Save repeatedly).
+    if (!editId) {
+      const duplicate = trades.find(
+        (x) =>
+          x.date === form.date &&
+          x.time === form.time &&
+          x.symbol === form.symbol &&
+          x.side === form.side &&
+          x.entryPrice === parseFloat(form.entryPrice) &&
+          x.exitPrice === parseFloat(form.exitPrice) &&
+          x.size === parseFloat(form.size),
+      )
+      if (
+        duplicate &&
+        !window.confirm('This looks identical to a trade you already logged. Add it anyway?')
+      ) {
+        return
+      }
+    }
+
     const trade: Trade = {
       id: editId ?? crypto.randomUUID(),
       date: form.date,
@@ -142,8 +172,10 @@ export default function LogTrade() {
         .filter(Boolean),
       accountId: form.accountId,
     }
+    savedRef.current = true
     if (editId) editTrade(editId, trade)
     else addTrade(trade)
+    toast(editId ? 'Trade updated ✓' : `Trade saved ✓  ${fmtMoney(calc.pnl)}`)
     navigate('/trades')
   }
 

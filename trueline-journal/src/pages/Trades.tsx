@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore'
+import { toast } from '../store/useToastStore'
 import type { Trade, SymbolCode } from '../store/types'
 import { SYMBOLS, SYMBOL_COLORS } from '../lib/markets'
 import { fmtMoney, fmtPct, fmtR, moneyClass } from '../lib/format'
@@ -108,7 +109,10 @@ export default function Trades() {
   }
 
   function handleDelete(id: string) {
-    if (window.confirm('Delete this trade? This cannot be undone.')) deleteTrade(id)
+    if (window.confirm('Delete this trade? This cannot be undone.')) {
+      deleteTrade(id)
+      toast('Trade deleted', 'info')
+    }
   }
 
   return (

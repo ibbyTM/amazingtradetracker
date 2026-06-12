@@ -1,13 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { SYNC_LABELS, useSyncStore } from '../store/useSyncStore'
-
-const SYNC_DOTS: Record<string, string> = {
-  off: 'bg-text-muted',
-  locked: 'bg-accent-red',
-  syncing: 'bg-accent-yellow',
-  synced: 'bg-accent-green',
-  error: 'bg-accent-red',
-}
+import { SYNC_DOTS, SYNC_LABELS, useSyncStore } from '../store/useSyncStore'
 
 const SECTIONS: { title: string; items: { to: string; icon: string; label: string }[] }[] = [
   {

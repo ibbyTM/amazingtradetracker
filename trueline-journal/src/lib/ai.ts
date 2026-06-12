@@ -75,7 +75,8 @@ export function getPageContext(page: string): string {
     for (const a of accounts) {
       const st = accountStatus(a, trades)
       lines.push(
-        `  ${a.name} (${a.platform}, $${a.accountSize.toLocaleString()}): balance ` +
+        `  ${a.name} (${a.platform}, ${(a.stage ?? 'eval') === 'funded' ? 'FUNDED' : 'EVAL'}, ` +
+          `$${a.accountSize.toLocaleString()}): balance ` +
           `$${st.balance.toLocaleString()} | today ${fmtMoney(st.todayPnl)} | daily loss used ` +
           `$${st.dailyUsed.toLocaleString()}/$${a.dailyLossLimit.toLocaleString()} ` +
           `(${st.dailyPct.toFixed(0)}%) | trailing DD used $${st.ddUsed.toLocaleString()}/` +

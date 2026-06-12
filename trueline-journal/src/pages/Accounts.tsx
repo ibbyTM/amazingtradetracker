@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useStore } from '../store/useStore'
 import { toast } from '../store/useToastStore'
-import type { Account, Platform } from '../store/types'
+import type { Account, AccountStage, Platform } from '../store/types'
 import { PLATFORMS } from '../lib/markets'
 import { accountStatus, barColor } from '../lib/guardrails'
 import { fmtMoney, moneyClass } from '../lib/format'
@@ -9,6 +9,7 @@ import { fmtMoney, moneyClass } from '../lib/format'
 interface FormState {
   name: string
   platform: Platform
+  stage: AccountStage
   accountSize: string
   startingBalance: string
   currentBalance: string
@@ -19,6 +20,7 @@ interface FormState {
 const emptyForm: FormState = {
   name: '',
   platform: 'Topstep',
+  stage: 'eval',
   accountSize: '',
   startingBalance: '',
   currentBalance: '',
@@ -26,8 +28,14 @@ const emptyForm: FormState = {
   trailingDDLimit: '',
 }
 
+const stageBadge = (stage: AccountStage) =>
+  stage === 'funded'
+    ? 'bg-accent-green/15 text-accent-green'
+    : 'bg-accent-yellow/15 text-accent-yellow'
+
 export default function Accounts() {
-  const { accounts, trades, addAccount, editAccount, deleteAccount } = useStore()
+  const { accounts, trades, addAccount, editAccount, deleteAccount, graduateAccount } =
+    useStore()
   const [form, setForm] = useState<FormState>(emptyForm)
   const [editingId, setEditingId] = useState<string | null>(null)
   // Once the user types in Current Balance it stops mirroring Starting Balance.
@@ -35,6 +43,11 @@ export default function Accounts() {
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   const set = (patch: Partial<FormState>) => setForm((f) => ({ ...f, ...patch }))
+
+  const funded = accounts.filter((a) => (a.stage ?? 'eval') === 'funded')
+  const evals = accounts.filter((a) => (a.stage ?? 'eval') === 'eval')
+  const sumBalance = (list: Account[]) => list.reduce((s, a) => s + a.currentBalance, 0)
+  const totalPnl = accounts.reduce((s, a) => s + (a.currentBalance - a.startingBalance), 0)
 
   function setStartingBalance(value: string) {
     set(
@@ -66,6 +79,7 @@ export default function Accounts() {
     const base = {
       name: form.name.trim(),
       platform: form.platform,
+      stage: form.stage,
       accountSize: parseFloat(form.accountSize),
       startingBalance: parseFloat(form.startingBalance),
       currentBalance: parseFloat(form.currentBalance),
@@ -75,11 +89,7 @@ export default function Accounts() {
     if (editingId) {
       editAccount(editingId, base)
     } else {
-      const account: Account = {
-        id: crypto.randomUUID(),
-        ...base,
-      }
-      addAccount(account)
+      addAccount({ id: crypto.randomUUID(), ...base })
     }
     setForm(emptyForm)
     setEditingId(null)
@@ -93,17 +103,20 @@ export default function Accounts() {
     setForm({
       name: a.name,
       platform: a.platform,
+      stage: a.stage ?? 'eval',
       accountSize: String(a.accountSize),
       startingBalance: String(a.startingBalance),
       currentBalance: String(a.currentBalance),
       dailyLossLimit: String(a.dailyLossLimit),
       trailingDDLimit: String(a.trailingDDLimit),
     })
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   function handleDelete(id: string) {
     if (window.confirm('Delete this account? Its trades stay but lose the link.')) {
       deleteAccount(id)
+      toast('Account deleted', 'info')
       if (editingId === id) {
         setEditingId(null)
         setForm(emptyForm)
@@ -112,9 +125,93 @@ export default function Accounts() {
     }
   }
 
+  function handleGraduate(a: Account) {
+    const ok = window.confirm(
+      `Graduate "${a.name}" to funded?\n\nIt will be marked FUNDED and its balance tracking ` +
+        `restarts at the starting balance ($${a.startingBalance.toLocaleString()}). ` +
+        `Logged trades stay linked for your history.`,
+    )
+    if (!ok) return
+    graduateAccount(a.id)
+    toast(`${a.name} graduated to funded 🎉`)
+  }
+
+  function renderCard(a: Account) {
+    const st = accountStatus(a, trades)
+    const stage = a.stage ?? 'eval'
+    return (
+      <div key={a.id} className="card p-5">
+        <div className="mb-3 flex items-center gap-2">
+          <span className="min-w-0 truncate font-bold">{a.name}</span>
+          <span className={`badge shrink-0 ${stageBadge(stage)}`}>
+            {stage === 'funded' ? 'FUNDED' : 'EVAL'}
+          </span>
+          <span className="badge ml-auto shrink-0 bg-accent-blue/15 text-accent-blue">
+            {a.platform}
+          </span>
+        </div>
+
+        <div className="mb-4 flex items-baseline gap-2">
+          <span className="num text-2xl font-bold">${st.balance.toLocaleString()}</span>
+          <span className={`num text-sm font-semibold ${moneyClass(st.pnlDelta)}`}>
+            {fmtMoney(st.pnlDelta)}
+          </span>
+          <span className="ml-auto text-xs text-text-muted">
+            start ${a.startingBalance.toLocaleString()}
+          </span>
+        </div>
+
+        <Bar label="Daily loss" pct={st.dailyPct} room={st.dailyRoom} limit={a.dailyLossLimit} />
+        <Bar label="Trailing DD" pct={st.ddPct} room={st.ddRoom} limit={a.trailingDDLimit} />
+
+        {stage === 'eval' && (
+          <button className="btn-green mt-4 w-full" onClick={() => handleGraduate(a)}>
+            ⬆ Graduate to funded
+          </button>
+        )}
+        <div className="mt-2 flex gap-2">
+          <button className="btn-ghost flex-1 !py-1.5" onClick={() => startEdit(a)}>
+            Edit
+          </button>
+          <button className="btn-danger flex-1 !py-1.5" onClick={() => handleDelete(a.id)}>
+            Delete
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-4">
       <h1 className="text-xl font-bold">Accounts</h1>
+
+      {/* Account balances summary */}
+      {accounts.length > 0 && (
+        <div className="card card-green p-5">
+          <h2 className="card-title mb-3">Account balances</h2>
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            <SummaryStat
+              label={`Funded (${funded.length})`}
+              value={`$${sumBalance(funded).toLocaleString()}`}
+              className="text-accent-green"
+            />
+            <SummaryStat
+              label={`Evals (${evals.length})`}
+              value={`$${sumBalance(evals).toLocaleString()}`}
+              className="text-accent-yellow"
+            />
+            <SummaryStat
+              label="Combined balance"
+              value={`$${sumBalance(accounts).toLocaleString()}`}
+            />
+            <SummaryStat
+              label="Combined P&L"
+              value={fmtMoney(totalPnl)}
+              className={moneyClass(totalPnl)}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Add / edit form */}
       <div className="card space-y-4 p-6">
@@ -142,6 +239,31 @@ export default function Accounts() {
                 </option>
               ))}
             </select>
+          </Field>
+          <Field label="Account type">
+            <div className="grid grid-cols-2 gap-2">
+              {(
+                [
+                  ['eval', 'Eval'],
+                  ['funded', 'Funded'],
+                ] as [AccountStage, string][]
+              ).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => set({ stage: value })}
+                  className={`min-h-[44px] rounded-lg border py-2 text-sm font-bold transition-colors md:min-h-0 ${
+                    form.stage === value
+                      ? value === 'funded'
+                        ? 'border-accent-green bg-accent-green/15 text-accent-green'
+                        : 'border-accent-yellow bg-accent-yellow/15 text-accent-yellow'
+                      : 'border-border bg-bg-primary text-text-muted hover:text-text-primary'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
           </Field>
           <Field label="Account size ($)" error={errors.accountSize}>
             <input type="number" className="field num" value={form.accountSize}
@@ -180,56 +302,62 @@ export default function Accounts() {
               Cancel
             </button>
           )}
-          <button className="btn-primary" onClick={handleSave}>
+          <button className="btn-primary max-md:flex-1" onClick={handleSave}>
             {editingId ? 'Save changes' : 'Add account'}
           </button>
         </div>
       </div>
 
-      {/* Cards grid */}
+      {/* Cards, grouped by stage */}
       {accounts.length === 0 ? (
         <div className="card p-8 text-center text-sm text-text-muted">
           No accounts added. Add your first funded account to track your prop guardrails.
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {accounts.map((a) => {
-            const st = accountStatus(a, trades)
-            return (
-              <div key={a.id} className="card p-5">
-                <div className="mb-3 flex items-center justify-between">
-                  <span className="font-bold">{a.name}</span>
-                  <span className="badge bg-accent-blue/15 text-accent-blue">{a.platform}</span>
-                </div>
-
-                <div className="mb-4 flex items-baseline gap-2">
-                  <span className="num text-2xl font-bold">
-                    ${st.balance.toLocaleString()}
-                  </span>
-                  <span className={`num text-sm font-semibold ${moneyClass(st.pnlDelta)}`}>
-                    {fmtMoney(st.pnlDelta)}
-                  </span>
-                  <span className="ml-auto text-xs text-text-muted">
-                    start ${a.startingBalance.toLocaleString()}
-                  </span>
-                </div>
-
-                <Bar label="Daily loss" pct={st.dailyPct} room={st.dailyRoom} limit={a.dailyLossLimit} />
-                <Bar label="Trailing DD" pct={st.ddPct} room={st.ddRoom} limit={a.trailingDDLimit} />
-
-                <div className="mt-4 flex gap-2">
-                  <button className="btn-ghost flex-1 !py-1.5" onClick={() => startEdit(a)}>
-                    Edit
-                  </button>
-                  <button className="btn-danger flex-1 !py-1.5" onClick={() => handleDelete(a.id)}>
-                    Delete
-                  </button>
-                </div>
+        <>
+          {funded.length > 0 && (
+            <section className="space-y-3">
+              <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-text-muted">
+                <span className="h-2 w-2 rounded-full bg-accent-green" /> Funded
+              </h2>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {funded.map(renderCard)}
               </div>
-            )
-          })}
-        </div>
+            </section>
+          )}
+          {evals.length > 0 && (
+            <section className="space-y-3">
+              <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-text-muted">
+                <span className="h-2 w-2 rounded-full bg-accent-yellow" /> Evaluations
+              </h2>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {evals.map(renderCard)}
+              </div>
+            </section>
+          )}
+        </>
       )}
+    </div>
+  )
+}
+
+function SummaryStat({
+  label,
+  value,
+  className = '',
+}: {
+  label: string
+  value: string
+  className?: string
+}) {
+  return (
+    <div className="min-w-0">
+      <div className="text-xs font-semibold uppercase tracking-wider text-text-muted">
+        {label}
+      </div>
+      <div className={`num mt-1 truncate text-xl font-bold md:text-2xl ${className}`}>
+        {value}
+      </div>
     </div>
   )
 }
@@ -249,7 +377,7 @@ function Bar({
     <div className="mb-3">
       <div className="mb-1 flex justify-between gap-2 text-xs">
         <span className="text-text-muted">{label}</span>
-        <span className="num text-text-muted">
+        <span className="num truncate text-text-muted">
           ${room.toLocaleString()} room of ${limit.toLocaleString()}
         </span>
       </div>

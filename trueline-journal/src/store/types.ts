@@ -1,6 +1,7 @@
 export type SymbolCode = 'NQ' | 'ES' | 'MNQ' | 'MES' | 'CL' | 'GC' | 'other'
 export type Side = 'LONG' | 'SHORT'
 export type Platform = 'Tradovate' | 'Topstep' | 'Apex' | 'Bulenox' | 'Tradeday' | 'other'
+export type AccountStage = 'eval' | 'funded'
 export type Bias = 'Bullish' | 'Bearish' | 'Neutral'
 
 export interface Trade {
@@ -27,6 +28,8 @@ export interface Account {
   id: string
   name: string
   platform: Platform
+  /** Evaluation/challenge account vs live funded account. */
+  stage: AccountStage
   accountSize: number
   dailyLossLimit: number
   trailingDDLimit: number

@@ -18,6 +18,8 @@ interface AppState extends ExportedData {
   addAccount: (account: Account) => void
   editAccount: (id: string, patch: Partial<Account>) => void
   deleteAccount: (id: string) => void
+  /** Eval passed: mark funded and restart balance tracking. */
+  graduateAccount: (id: string) => void
 
   addJournalEntry: (entry: DailyEntry) => void
   editJournalEntry: (date: string, patch: Partial<DailyEntry>) => void
@@ -93,6 +95,15 @@ export const useStore = create<AppState>()(
       deleteAccount: (id) =>
         set((s) => ({ accounts: s.accounts.filter((a) => a.id !== id) })),
 
+      graduateAccount: (id) =>
+        set((s) => ({
+          accounts: s.accounts.map((a) =>
+            a.id === id
+              ? { ...a, stage: 'funded', currentBalance: a.startingBalance }
+              : a,
+          ),
+        })),
+
       addJournalEntry: (entry) =>
         set((s) => ({
           journal: [...s.journal.filter((e) => e.date !== entry.date), entry],
@@ -109,13 +120,24 @@ export const useStore = create<AppState>()(
       importData: (data) =>
         set(() => ({
           trades: data.trades ?? [],
-          accounts: data.accounts ?? [],
+          // accounts saved before stages existed default to eval
+          accounts: (data.accounts ?? []).map((a) => ({ ...a, stage: a.stage ?? 'eval' })),
           journal: data.journal ?? [],
           settings: { ...defaultSettings, ...data.settings },
         })),
 
       clearAll: () => set(() => ({ ...emptyData, settings: { ...defaultSettings } })),
     }),
-    { name: 'trueline-journal' },
+    {
+      name: 'trueline-journal',
+      version: 1,
+      migrate: (persisted) => {
+        const s = persisted as ExportedData
+        return {
+          ...s,
+          accounts: (s.accounts ?? []).map((a) => ({ ...a, stage: a.stage ?? 'eval' })),
+        }
+      },
+    },
   ),
 )

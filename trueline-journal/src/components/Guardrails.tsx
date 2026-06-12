@@ -52,9 +52,20 @@ export default function Guardrails({
           const st = accountStatus(a, trades)
           return (
             <div key={a.id} className="mb-4 last:mb-0">
-              <div className="mb-2 flex items-center justify-between">
-                <span className="text-sm font-semibold">{a.name}</span>
-                <span className="badge bg-accent-blue/15 text-accent-blue">{a.platform}</span>
+              <div className="mb-2 flex items-center gap-2">
+                <span className="min-w-0 truncate text-sm font-semibold">{a.name}</span>
+                <span
+                  className={`badge shrink-0 ${
+                    (a.stage ?? 'eval') === 'funded'
+                      ? 'bg-accent-green/15 text-accent-green'
+                      : 'bg-accent-yellow/15 text-accent-yellow'
+                  }`}
+                >
+                  {(a.stage ?? 'eval') === 'funded' ? 'FUNDED' : 'EVAL'}
+                </span>
+                <span className="badge ml-auto shrink-0 bg-accent-blue/15 text-accent-blue">
+                  {a.platform}
+                </span>
               </div>
               <LimitBar
                 label="Daily loss"
